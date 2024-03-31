@@ -1,1 +1,1 @@
- <centre>#Monolit</centre>
+#Monolit
