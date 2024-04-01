@@ -2,146 +2,226 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sodium.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <tomcrypt.h>
 #include "util.h"
+#include "save_load.h"
 
 #define ARG_MAX 1024
-//Still working on this function, add to util.h when done
-int save(node_t * head, char * name, char * password){
-  if(!head){return 1;}
-//TODO: add encryption,password salting and hashing to be used as authentication system
-  FILE * fp = fopen(name, "w");
-  node_t * current = head;
-  char * db = NULL;
-  int total_size = 0;
-  while(current){
-    total_size += current->data.uname_l + 1;
-    total_size += current->data.ename_l + 1;
-    total_size += current->data.pwd_l + 1;
-    current = current->next;
-  }
-  db = malloc(sizeof(char) * (total_size + 1));
-  current = head;
-  while( current ){
-    strncat(db, strcat(current->data.ename, " "), current->data.ename_l + 1);
-    strncat(db, strcat(current->data.uname, " "), current->data.uname_l + 1);
-    strncat(db, strcat(current->data.pwd, "\n"), current->data.pwd_l + 1);
-    current = current->next;
-  }
-  fwrite(db, 1, total_size, fp);
-  return 0;
-}
-
-int print_spc(node_t * head, char * enm){
-  node_t * current = head;
-  while(current){
-    if(strncmp(current->data.ename, enm, current->data.ename_l) == 0){
-      if(current->data.ename){
-        printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
-      }
-      if(current->data.uname){
-        printf("Username:    %s  %d\n", current->data.uname, current->data.uname_l);
-      }
-      if(current->data.pwd){
-        printf("Password:    %s  %d\n", current->data.pwd, current->data.pwd_l);
-      }
-      return 0;
-    }
-    current = current->next;
-  }
-  return 1;
-}
+struct stat st = {0};
 
 int print_logo(){
   puts(" _  _   ___   _ _   ___   _     _   ___");
   puts("| \\/ | | _ | | \\\\| | _ | | |_  | | |_ _|");
-  puts("|_||_| |___| ||| | |___| |___| |_|  |_|\n");
-  puts("                  __");
-  puts("                 _||__");
-  puts("                /     \\");
-  puts("               /_______\\");
-  puts("               | #   # |");
-  puts("               |_______|\n\n");
+  puts("|_||_| |___| ||| | |___| |___| |_|  |_|");
+  if(logo){
+  puts("                ________ ");
+  puts("                \\  /\\  / ");
+  puts("                 \\/__\\/ ");
+  puts("                  \\  / ");
+  puts("                   \\/\n");
+  }
 }
-int main(int argc, char **argv)
-{  
-  char arg_input[ARG_MAX];
-  char **args;
+int main(int argc, char **argv){
+  if (sodium_init() < 0) {
+    puts("Could not initiate libsodium");
+    return 0;
+  }
+  unsigned char path[PATH_L];
+  unsigned char arg_input[ARG_MAX];
+  unsigned char **args;
   node_t * head = EMPTY_LIST;
+  unsigned char * keyfile;
+  int key_password;
+  unsigned char * key_pass;
+  unsigned char name[64];
+  getlogin_r(name, 64);
+  strncat(path, "/home/", PATH_L - 1);
+  strncat(path, name, PATH_L - 1);
+  strncat(path, "/.monolit", PATH_L - 1);
+  if (stat(path, &st) == -1) {
+    mkdir(path, 0700);
+  }
+  load_settings(path);
   system("clear");
   print_logo();
+  if(help_msg == true){puts("Use \"help\" to introduce yourself, to turn this message off do \"help off\"");}
   while(1){
     printf(">> ");
     fgets( arg_input ,ARG_MAX-1 , stdin);
     arg_input[strlen(arg_input) - 1] = '\0';
     int arg_count = get_arg(arg_input, &args);
     if(arg_count != 0){
-//i am aware this is super ugly but ill fix it later
-//it works for now
-
-//else if(strcmp(args[0], "name of command" ) == 0 ){
-//  if(arg_count == required number of arguments){
-//  "whatever function"
-//}
-//else{puts("Missing arguments");}
-//}
-
-//basic command layout
-        if(strcmp(args[0], "exit" ) == 0 ){
-        free_list(head);
-        head = EMPTY_LIST;
-	system("clear");
+      if(strcmp(args[0], "exit" ) == 0 ){
+        puts("Exiting...");
+        save_settings(path);
+	free_list(head);
+        for(int i = 0; i < arg_count; ++i){
+          sodium_memzero(args[i], strlen(args[i]));
+          if(args[i]){free(args[i]);}
+        }
+	sodium_memzero(arg_input, ARG_MAX);
         break;
       }
-      else if(strcmp(args[0], "print_list" ) == 0 ){
+      else if(strcmp(args[0], "show_all" ) == 0 ){
         print_list(head);
       }
 
-      else if(strcmp(args[0], "new_entry" ) == 0 ){
+      else if(strcmp(args[0], "new" ) == 0 ){
         if(arg_count == 4 ){
-          push(&head, args[1], args[2], args[3]);
+          push(&head, args[1], args[2], args[3], true);;
 	}
-	else{puts("Missing arguments");}
+	else{wrong_arg(4, arg_count);}
+	
       }
 
-      else if(strcmp(args[0], "remove_entry" ) == 0 ){
-        if(arg_count == 2 ){
-          if(rem_spc(&head, args[1]) == 1 ){
-            puts("Entry was not found");
+      else if(strcmp(args[0], "new_r" ) == 0 ){
+        if(arg_count == 4 ){
+	  int pass_len = strtol(args[3], NULL, 10);
+	  if(pass_len > 0){
+	  unsigned char * pass = pass_gen(pass_len);
+          push(&head, args[1], args[2], pass, true);
+	  sodium_memzero(pass, pass_len);
+	  free(pass);
 	  }
+	  else{puts("Length can not be less than 1");}
 	}
-	else{puts("Missing arguments");}
+	else{wrong_arg(4, arg_count);}
       }
+
+      else if(strcmp(args[0], "remove" ) == 0 ){
+        if(arg_count == 2 ){
+          rem_spc(&head, args[1]);
+	}
+	else{wrong_arg(2, arg_count);}
+      }
+
       else if(strcmp(args[0], "show" ) == 0 ){
         if(arg_count == 2 ){
-          if(print_spc(head, args[1]) == 1 ){
-            puts("Entry was not found");
-	  }
+          print_spc(head, args[1]);
 	}
-	else{puts("Missing arguments");}
+	else{wrong_arg(2, arg_count);}
       }
       
-      else if(strcmp(args[0], "clear" ) == 0 ){
-        if(arg_count == 1){
+      else if(strcmp(args[0], "clear" ) == 0 || strcmp(args[0], "clr") == 0){
           system("clear");
 	  print_logo();
-	}
-	else{puts("Missing arguments");}
       }
       else if(strcmp(args[0], "save" ) == 0 ){
         if(arg_count == 3){
-	  save(head, args[1] , args[2]);
+	  save(head, args[1] , args[2], path);
 	}
-	else{puts("Missing arguments");}
+	else{wrong_arg(3, arg_count);}
     }
-    else{printf("Unknown command: %s\n", args[0]);}
 
+    else if(strcmp(args[0], "load" ) == 0 ){
+        if(arg_count == 3){
+	  if(load(&head, args[1] , args[2], path) == 0){
+            print_list(head);
+	  }
+	}
+	else{wrong_arg(3, arg_count);}
+    }
+
+    else if(strcmp(args[0], "save_kf" ) == 0 ){
+        if(arg_count == 4){
+	  keyfile = load_keyfile(args[3], path);
+	  if(keyfile){
+	    key_password = strlen(args[2]) + strlen(keyfile);
+	    key_pass = calloc(1, sizeof(unsigned char) * (key_password + 1));
+	    strncpy(key_pass, keyfile, key_password);
+	    strncat(key_pass, args[2], key_password);
+	    save(head, args[1], key_pass, path);
+	    sodium_memzero(key_pass, key_password);
+	    free(keyfile);
+	    free(key_pass);
+	    keyfile = NULL;
+	    key_pass = NULL;
+	  }
+	}
+	else{wrong_arg(3, arg_count);}
+    }
+
+    else if(strcmp(args[0], "load_kf" ) == 0 ){
+        if(arg_count == 4){
+	  keyfile = load_keyfile(args[3], path);
+	  if(keyfile){
+	    key_password = strlen(args[2]) + strlen(keyfile);
+	    key_pass = calloc(1, sizeof(unsigned char) * (key_password + 1));
+	    strncpy(key_pass, keyfile, key_password);
+	    strncat(key_pass, args[2], key_password);
+	    if(load(&head, args[1], key_pass, path) == 0){
+	      print_list(head);
+	    }
+	    sodium_memzero(key_pass, key_password);
+	    free(keyfile);
+	    free(key_pass);
+	    keyfile = NULL;
+	    key_pass = NULL;
+	  }
+	}
+	else{wrong_arg(3, arg_count);}
+    }
+
+
+    else if(strcmp(args[0], "edit" ) == 0 ){
+        if(arg_count == 4){
+	  edit_entry(head, args[1] , args[2], args[3]);
+	}
+	else{wrong_arg(4, arg_count);}
+    }
+
+    else if(strcmp(args[0], "r_pass" ) == 0 ){
+        if(arg_count == 2){
+	  int rand_l = strtol(args[1], NULL, 10);
+	  if(rand_l > 0){
+	    unsigned char * rand = pass_gen(rand_l);
+	    printf("Random password: %s\n", rand);
+	    sodium_memzero(rand, rand_l);
+	    free(rand);
+	  }
+	  else{puts("Length can not be less than 1");}
+
+	}
+	else{wrong_arg(2, arg_count);}
+    }
+
+    else if(strcmp(args[0], "new_kf" ) == 0 ){
+
+        if(arg_count == 3){
+	  new_keyfile(args[1], args[2], path);
+	}
+	else{wrong_arg(3, arg_count);}
+    }
+
+    else if(strcmp(args[0], "help" ) == 0 ){
+      if(arg_count == 2){
+	    help(args[1]);
+	  }
+	  else if(arg_count == 1 ){
+        help("0");//arbitrary character
+	  }
+	  else{wrong_arg(2, arg_count);}
+    }
+    else if(strcmp(args[0], "logo" ) == 0 ){
+
+        if(arg_count == 1){
+	  if(logo == true){logo = false;}
+	  else{logo = true;}
+	}
+	else{wrong_arg(3, arg_count);}
+    }
+
+    else{printf("Unknown command: %s\n", args[0]);}
+    
     for(int i = 0; i < arg_count; ++i){
       sodium_memzero(args[i], strlen(args[i]));
       if(args[i]){free(args[i]);}
     }
+    free(args);
+    }
   }
-  }
-
   return 0;
 }
