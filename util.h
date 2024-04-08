@@ -223,7 +223,7 @@ int push(node_t ** head, unsigned char * enm, unsigned char * unm, unsigned char
     new_node->data.pwd_l = strlen(pwd);
   }
   else{return 1;}
-  if(new_node->data.pwd_l < 8 && v == true){puts("A password length lower than 8 is not reccomended");}
+  if(new_node->data.pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
 //calloc is used here cus malloc was doing a wierd
   new_node->data.ename = calloc(1 , sizeof(unsigned char) * (new_node->data.ename_l + 1));  
   new_node->data.uname = calloc(1, sizeof(unsigned char) * (new_node->data.uname_l + 1));  
@@ -480,6 +480,7 @@ int decrypt(unsigned char chiper_text[], unsigned char plain_text[], unsigned ch
     }
     err = cbc_decrypt(chiper_text, plain_text, chipertext_length, &cbc);
     if (err != CRYPT_OK) {
+	printf("%d\n", err);
         printf("Error cbc decrypt: %s\n", error_to_string(err));
         return 1;
     }

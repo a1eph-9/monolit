@@ -1,3 +1,8 @@
-redo the customisation system, is very ugly, too many if else
-add more customisation options
-fix the save bug
+add more customisation options - in progress
+fix the save bug - not done
+finish work on file integrity checker - done
+integrity checker is finished, just write a script to test it, it definitely works
+i did some tests and it generates the same thing as in the file when loading
+but i want to see it working - in progress
+i figured out why the hash was changing between two values, because every time its loaded the entries get reversed in order - figured out
+put it on github - semi done

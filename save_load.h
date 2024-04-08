@@ -1,4 +1,4 @@
-#define SALT_L 64
+#define SALT_L 16
 
 
 int save(node_t * head, unsigned char * name, unsigned char * password, unsigned char * path){
@@ -21,6 +21,7 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
   unsigned char iv[16];//init vec for enc
   unsigned char salt[SALT_L];
   unsigned char hash[32];//hash of salted password
+  unsigned char integ_hash[32];//hash of salted password
   unsigned char key[32];//hash of password used as key
   unsigned char * salt_pass = calloc(1 ,sizeof(char) * (pass_len + SALT_L + 1));//salted password
   if(!salt_pass){return 1;}
@@ -60,10 +61,10 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
   sha256_init(&md);
   sha256_process(&md, salt_pass, pass_len + SALT_L);
   sha256_done(&md, hash);
-  db = calloc(sizeof(char) * (total_len + SALT_L + 32) ,1);
-  enc_len = round_up(total_len + SALT_L + 32, 16);
+  db = calloc(sizeof(char) * (total_len + SALT_L + 32 + 32) ,1);
+  enc_len = round_up(total_len + SALT_L + 32 + 32, 16);
   db_enc = calloc(1, sizeof(char) * (enc_len) + 1);
-  memset(db, '0', SALT_L + 32);
+  memset(db, '0', SALT_L + 32 + 32);
   current = head;
   //move entry values to db
   while(current){
@@ -75,10 +76,19 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
     strcat(db, "\n");
     current = current->next;
   }
-  //write salt and hash to database
+//write salt
   memcpy(db, salt, SALT_L);
+//write hash of password
   for(int i = SALT_L; i < SALT_L + 32; ++i){
     db[i] = hash[i - SALT_L];
+  }
+//generate integrity hash
+  sha256_init(&md);
+  sha256_process(&md, db + SALT_L + 64 , total_len);
+  sha256_done(&md, integ_hash);
+//write integrity hash to db
+  for(int i = SALT_L + 32; i < SALT_L + 64; ++i){
+    db[i] = integ_hash[i - SALT_L - 32];
   }
 //encrypt and write to file
   if( encrypt(db, db_enc, key, iv, enc_len) == 0){
@@ -95,18 +105,18 @@ puts;
 //possible that this first part has something to do with the load function
   if(salt_pass){
     sodium_memzero(salt_pass, pass_len + SALT_L);
-    puts("1");
+    //puts("1");
     free(salt_pass);//error here when saving with keyfile
-    puts("2");
+    //puts("2");
   }
   if(db){
     sodium_memzero(db, total_len + SALT_L + 32);
     free(db);
   }
   if(db_enc){
-    puts("3");
+    //puts("3");
     free(db_enc);//error here when saving normally
-    puts("4");
+    //puts("4");
   }
   //this bit of code being excluded causes a memleak, but i really cant figure out why it does a 
   //free(): invalid pointer sometimes, TODO:figure out later why this happens sometimes but not other times
@@ -136,6 +146,8 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   unsigned char iv[16];//init vec for dec
   unsigned char comp_hash[32];//comparation hash read from file
   unsigned char salt_hash[32];//hash generated from password and salt from file
+  unsigned char integ_hash[32];//hash to check integrity of file
+  unsigned char comp_integ_hash[32];//hash to check integrity of file
   unsigned char pwd_hash[32];//hash generated from password
   FILE * fp = fopen(full_path ,"r");
   if(fp){
@@ -161,6 +173,7 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     free(salt_pass);
     free(db);
     free(db_enc);
+    return 1;
   }
   //load decrypted salt and hash from db
   memcpy(salt, db, SALT_L);
@@ -176,9 +189,33 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   sha256_process(&md, salt_pass, pass_len + SALT_L);
   sha256_done(&md, salt_hash);
 //compare our hash and the hash from the file
-  if(memcmp(comp_hash, salt_hash, 32) != 0){
+  if(sodium_memcmp(comp_hash, salt_hash, 32) != 0){
     puts("Incorrect password");
     sodium_memzero(pwd_hash , 32);
+    sodium_memzero(salt_pass, pass_len + SALT_L);
+    free(salt_pass);
+    free(db);
+    free(db_enc);
+    return 1;
+  }
+//load comparation integrity hash from db
+  for(int i = SALT_L + 32; i < SALT_L + 64 ; ++i){
+    comp_integ_hash[i - SALT_L - 32] = db[i];
+  }
+//get the same total len as when saving
+  int total_len = 0;
+  for(int i = file_size - 16; i > SALT_L + 64; --i){
+    if(db[i] != '\0'){ total_len = i - SALT_L - 64 + 1; break;}
+  }
+//generate integrity hash 
+  sha256_init(&md);
+  sha256_process(&md, db + SALT_L + 64, total_len);
+  sha256_done(&md, integ_hash);
+//compare integrity hashes from file and generated from file
+  if(sodium_memcmp(comp_integ_hash, integ_hash, 32) != 0){
+    puts("Database has been corrupted or tampered with");
+    sodium_memzero(pwd_hash , 32);
+    sodium_memzero(comp_integ_hash , 32);
     sodium_memzero(salt_pass, pass_len + SALT_L);
     free(salt_pass);
     free(db);
@@ -191,11 +228,11 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   int ename_l = 0;
   int uname_l = 0;
   int pwd_l = 0;
-  int cur = SALT_L + 32;
+  int cur = SALT_L + 32 + 32;
   int current_part = 0;// 0 is entryname, 1 is username, 2 is passworddd
   int start;
   int total_entries = 0;
-  for(int i = SALT_L + 32; i < file_size - 16; ++i){
+  for(int i = SALT_L + 32 + 32; i < file_size - 16; ++i){
     if(db[i] == '\n'){++total_entries;}
   }
   for(int i = 0; i < total_entries; ++i){
@@ -258,6 +295,8 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   sodium_memzero(comp_hash , 32);
   sodium_memzero(salt_hash , 32);
   sodium_memzero(pwd_hash , 32);
+  sodium_memzero(comp_integ_hash , 32);
+  sodium_memzero(integ_hash , 32);
   sodium_memzero(salt , SALT_L);
   return 0;
 }

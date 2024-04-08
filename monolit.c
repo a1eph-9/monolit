@@ -17,11 +17,11 @@ int print_logo(){
   puts("| \\/ | | _ | | \\\\| | _ | | |_  | | |_ _|");
   puts("|_||_| |___| ||| | |___| |___| |_|  |_|");
   if(logo){
-  puts("                ________ ");
-  puts("                \\  /\\  / ");
-  puts("                 \\/__\\/ ");
-  puts("                  \\  / ");
-  puts("                   \\/\n");
+  puts("        ");
+  puts("        ");
+  puts("        ");
+  puts("        ");
+  puts("        \n");
   }
 }
 int main(int argc, char **argv){
