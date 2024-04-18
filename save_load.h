@@ -76,6 +76,7 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
     strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
     current = current->next;
   }
+
 //write salt
   memcpy(db, salt, SALT_L);
 //write hash of password
@@ -207,7 +208,7 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
 //get the same total len as when saving
   int total_len = 0;
   for(int i = file_size - 16; i > SALT_L + 64; --i){
-    if(db[i] != '\0'){ total_len = i - SALT_L - 64 + 1; break;}
+    if(db[i] == '\n'){ total_len = i - SALT_L - 64 + 1; break;}
   }
 //generate integrity hash 
   sha256_init(&md);
