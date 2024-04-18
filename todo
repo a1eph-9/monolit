@@ -1,8 +1,13 @@
-add more customisation options - in progress
-fix the save bug - not done
+redo customisation options - in progress
+add a way to change passgen preferences - in progress
+save last opened db - in progress
+
+
+fix the save bug - done on accident, but still - fixing the other bug made it reappear
+also discovered a possible buffer overflow with arg_len being bigger that path_len, so i fixed that
+DO NOT change arg len, weird crash happens and settings dont load correctly = issue has been fixed
+make new logo - done
 finish work on file integrity checker - done
-integrity checker is finished, just write a script to test it, it definitely works
-i did some tests and it generates the same thing as in the file when loading
-but i want to see it working - in progress
-i figured out why the hash was changing between two values, because every time its loaded the entries get reversed in order - figured out
+add shred function - done
+add some optimisations to save function - done
 put it on github - semi done

@@ -9,25 +9,12 @@
 #include "util.h"
 #include "save_load.h"
 
-#define ARG_MAX 1024
 struct stat st = {0};
 
-int print_logo(){
-  puts(" _  _   ___   _ _   ___   _     _   ___");
-  puts("| \\/ | | _ | | \\\\| | _ | | |_  | | |_ _|");
-  puts("|_||_| |___| ||| | |___| |___| |_|  |_|");
-  if(logo){
-  puts("        ");
-  puts("        ");
-  puts("        ");
-  puts("        ");
-  puts("        \n");
-  }
-}
 int main(int argc, char **argv){
   if (sodium_init() < 0) {
     puts("Could not initiate libsodium");
-    return 0;
+    return 1;
   }
   unsigned char path[PATH_L];
   unsigned char arg_input[ARG_MAX];
@@ -36,15 +23,18 @@ int main(int argc, char **argv){
   unsigned char * keyfile;
   int key_password;
   unsigned char * key_pass;
+  unsigned char last_db[ARG_MAX];
+  memset(path, '\0', ARG_MAX - 1);
   unsigned char name[64];
   getlogin_r(name, 64);
+  memset(path, '\0', PATH_L - 1);
   strncat(path, "/home/", PATH_L - 1);
   strncat(path, name, PATH_L - 1);
   strncat(path, "/.monolit", PATH_L - 1);
   if (stat(path, &st) == -1) {
     mkdir(path, 0700);
   }
-  load_settings(path);
+  load_settings(path, last_db);
   system("clear");
   print_logo();
   if(help_msg == true){puts("Use \"help\" to introduce yourself, to turn this message off do \"help off\"");}
@@ -52,11 +42,11 @@ int main(int argc, char **argv){
     printf(">> ");
     fgets( arg_input ,ARG_MAX-1 , stdin);
     arg_input[strlen(arg_input) - 1] = '\0';
-    int arg_count = get_arg(arg_input, &args);
+    unsigned int arg_count = get_arg(arg_input, &args);
     if(arg_count != 0){
       if(strcmp(args[0], "exit" ) == 0 ){
         puts("Exiting...");
-        save_settings(path);
+        save_settings(path, last_db);
 	free_list(head);
         for(int i = 0; i < arg_count; ++i){
           sodium_memzero(args[i], strlen(args[i]));
@@ -111,7 +101,9 @@ int main(int argc, char **argv){
       }
       else if(strcmp(args[0], "save" ) == 0 ){
         if(arg_count == 3){
-	  save(head, args[1] , args[2], path);
+	  if(save(head, args[1] , args[2], path) == 0){
+	    strncpy(last_db, args[1], ARG_MAX );
+	  }
 	}
 	else{wrong_arg(3, arg_count);}
     }
@@ -120,6 +112,7 @@ int main(int argc, char **argv){
         if(arg_count == 3){
 	  if(load(&head, args[1] , args[2], path) == 0){
             print_list(head);
+	    strncpy(last_db, args[1], ARG_MAX );
 	  }
 	}
 	else{wrong_arg(3, arg_count);}
@@ -133,7 +126,9 @@ int main(int argc, char **argv){
 	    key_pass = calloc(1, sizeof(unsigned char) * (key_password + 1));
 	    strncpy(key_pass, keyfile, key_password);
 	    strncat(key_pass, args[2], key_password);
-	    save(head, args[1], key_pass, path);
+	    if(save(head, args[1], key_pass, path)){ 
+	      strncpy(last_db, args[1], ARG_MAX );
+	    }
 	    sodium_memzero(key_pass, key_password);
 	    free(keyfile);
 	    free(key_pass);
@@ -154,6 +149,7 @@ int main(int argc, char **argv){
 	    strncat(key_pass, args[2], key_password);
 	    if(load(&head, args[1], key_pass, path) == 0){
 	      print_list(head);
+	      strncpy(last_db, args[1], ARG_MAX );
 	    }
 	    sodium_memzero(key_pass, key_password);
 	    free(keyfile);
@@ -173,20 +169,6 @@ int main(int argc, char **argv){
 	else{wrong_arg(4, arg_count);}
     }
 
-    else if(strcmp(args[0], "r_pass" ) == 0 ){
-        if(arg_count == 2){
-	  int rand_l = strtol(args[1], NULL, 10);
-	  if(rand_l > 0){
-	    unsigned char * rand = pass_gen(rand_l);
-	    printf("Random password: %s\n", rand);
-	    sodium_memzero(rand, rand_l);
-	    free(rand);
-	  }
-	  else{puts("Length can not be less than 1");}
-
-	}
-	else{wrong_arg(2, arg_count);}
-    }
 
     else if(strcmp(args[0], "new_kf" ) == 0 ){
 
@@ -205,22 +187,38 @@ int main(int argc, char **argv){
 	  }
 	  else{wrong_arg(2, arg_count);}
     }
-    else if(strcmp(args[0], "logo" ) == 0 ){
 
-        if(arg_count == 1){
-	  if(logo == true){logo = false;}
-	  else{logo = true;}
+    else if(strcmp(args[0], "r_pass" ) == 0 ){
+        if(arg_count == 2){
+	  int rand_l = strtol(args[1], NULL, 10);
+	  if(rand_l > 0){
+	    unsigned char * rand = pass_gen(rand_l);
+	    printf("Random password: %s\n", rand);
+	    sodium_memzero(rand, rand_l);
+	    free(rand);
+	  }
+	  else{puts("Length can not be less than 1");}
+
 	}
-	else{wrong_arg(3, arg_count);}
+	else{wrong_arg(2, arg_count);}
+    }
+
+    else if(strcmp(args[0], "shred" ) == 0 ){
+        if(arg_count == 2){
+	    shred(args[1], path);
+	}
+	else{wrong_arg(2, arg_count);}
     }
 
     else{printf("Unknown command: %s\n", args[0]);}
     
+    sodium_memzero(arg_input, sizeof(char) * ARG_MAX);
     for(int i = 0; i < arg_count; ++i){
       sodium_memzero(args[i], strlen(args[i]));
       if(args[i]){free(args[i]);}
     }
     free(args);
+    printf("Last db:  %s\n", last_db);
     }
   }
   return 0;

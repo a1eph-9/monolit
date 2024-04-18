@@ -15,29 +15,39 @@
 #define NUM_L 10
 #define SPEC "!@#$%^&*()-_=+`~[]{}\\|;:'\",.<>/?"
 #define SPEC_L 32
-
-#define PATH_L 128
+#define ARG_MAX 256
+#define PATH_L ARG_MAX + 64
 
 bool up = true;
 bool low = true;
 bool num = true;
 bool spec = true;
 bool help_msg = true;
-bool logo = true;
 
 typedef struct entry{
   unsigned char * ename;
   unsigned char * uname;
   unsigned char * pwd;
-  int ename_l;
-  int uname_l;
-  int pwd_l;
+  unsigned int ename_l;
+  unsigned int uname_l;
+  unsigned int pwd_l;
 }etr;
 
 typedef struct node_t{
   etr data;
   struct node_t * next;
 }node_t;
+
+int print_logo(){
+
+puts("  ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
+puts("  ████| ████|  ██╔═══██_ ████_  ██| ██╔═══██| ██|      ██| |__██___| ");
+puts("  ██|████|██|  ██║   ██| ██|██_ ██| ██║   ██| ██|      ██|    ██| ");
+puts("  ██||██_|██|  ██║   ██| ██||██_██| ██║   ██| ██|      ██|    ██| ");
+puts("  ██| __| ██|  |██████_| ██| |████| |██████_| ███████_ ██|    ██| ");
+puts("  |_|     |_|   |_____|  |_|  |___|  |_____|  |______| |_|    |_| ");
+puts("  A simple pasword manager written in C\n");
+}
 
 int wrong_arg(int ex, int go){
   if(go < ex){
@@ -67,61 +77,37 @@ int entry_exists(node_t * head, unsigned char * entry_name){
   return 1;
 }
 
-int load_settings(unsigned char * path){
-  unsigned char full_path[PATH_L];
-  unsigned char settings[12];
+int load_settings(unsigned char * path, unsigned char * last_db){
+  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+  if(!full_path){return 1;} 
   FILE * fp;
-  int len = 0;
   memset(full_path, '\0', PATH_L - 1);
-  memset(settings, '\0', 12);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   if(fexists(full_path) != 0){
    return 1; 
   }
   fp = fopen(full_path ,"r");
+  free(full_path);
   if(!fp){return 1;}
-  fread(settings, 1, 12, fp);
-  if(settings[0] == '1'){up = true;}
-  else{up = false;}
-  if(settings[1] == '1'){low = true;}
-  else{low = false;}
-  if(settings[2] == '1'){num = true;}
-  else{num = false;}
-  if(settings[3] == '1'){spec = true;}
-  else{spec = false;}
-  if(settings[4] == '1'){help_msg = true;}
-  else{help_msg = false;}
-  if(settings[5] == '1'){logo = true;}
-  else{logo = false;}
+
+
   fclose(fp);
   return 0;
 }
 
-int save_settings(unsigned char * path){
-  unsigned char full_path[PATH_L];
-  unsigned char settings[12];
+int save_settings(unsigned char * path, unsigned char * last_db){
+  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+  if(!full_path){return 1;}
   FILE * fp;
-  int len = 0;
   memset(full_path, '\0', PATH_L - 1);
-  memset(settings, '\0', 12);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   fp = fopen(full_path ,"w");
-  strncat(full_path, "/config", PATH_L - 1);
-  if(up){strcat(settings, "1");}
-  else{strcat(settings, "0");}
-  if(low){strcat(settings, "1");}
-  else{strcat(settings, "0");} 
-  if(num){strcat(settings, "1");}
-  else{strcat(settings, "0");} 
-  if(spec){strcat(settings, "1");}
-  else{strcat(settings, "0");}
-  if(help_msg){strcat(settings, "1");}
-  else{strcat(settings, "0");}
-  if(logo){strcat(settings, "1");}
-  else{strcat(settings, "0");}
-  fwrite(settings, 1, 12, fp);
+  free(full_path);
+  if(!fp){return 1;}
+
+
   fclose(fp);
   return 0;
 }
@@ -135,7 +121,7 @@ int round_up(int len, int block_size){
 
 //make settings to do this shit
 unsigned char * pass_gen(int len){
-  int available = 0;
+  unsigned int available = 0;
   if(up){available += UPPER_L -1;}
   if(low){available += LOWER_L -1;}
   if(num){available += NUM_L -1;}
@@ -159,8 +145,8 @@ unsigned char * pass_gen(int len){
 }
 
 int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path){
-  char full_path[PATH_L];
-  memset(full_path, '\0', PATH_L);
+  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+  if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
   strncat(full_path, name, PATH_L - 1);
@@ -168,14 +154,15 @@ int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path)
   int key_len = strtol(len, NULL, 10);
   if(key_len <= 0){puts("Lenght can not be less than 1"); return 1;}
   if(fexists(full_path) == 0){
-    printf("The file %s already exists");
+    printf("The file %s already exists\n");
     return 1;
   }
   FILE * fp = fopen(full_path, "w");
+  free(full_path);
   unsigned char * key = pass_gen(key_len);
   if(key && fp){
     fwrite("mlkf", 1, 4, fp);
-    fwrite(key, 1, key_len, fp);//here
+    fwrite(key, 1, key_len, fp);
     sodium_memzero(key, key_len);
     free(key);
     fflush(fp);
@@ -186,10 +173,10 @@ int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path)
 }
 
 unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
-  unsigned char full_path[PATH_L];
+  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+  if(!full_path){return 0;}
   unsigned char verif[4];
   unsigned char * keyfile;
-  memset(full_path, '\0', PATH_L);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
   strncat(full_path, name, PATH_L - 1);
@@ -199,8 +186,9 @@ unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
     return 0;
   }
   FILE * fp = fopen(full_path, "r");
+  free(full_path);
   fseek(fp, 0, SEEK_END);
-  int kf_len = ftell(fp);
+  unsigned int kf_len = ftell(fp);
   rewind(fp);
   fread(verif, 1, 4, fp);
   if(strncmp(verif, "mlkf", 4) != 0){fclose(fp); return 0;}
@@ -212,31 +200,50 @@ unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
   return keyfile;
 }
 
+int shred(unsigned char * name, unsigned char * path){
+  unsigned char full_path[PATH_L];
+  unsigned char command[] = {"shred -n 16 -z -u "};
+  memset(full_path, '\0', PATH_L);
+  strncat(full_path, path, PATH_L - 1);
+  strncat(full_path, "/", PATH_L - 1);
+  strncat(full_path, name, PATH_L - 1);
+  strncat(full_path, ".mldb", PATH_L - 1);
+  if(fexists(full_path) != 0){
+    puts("File was not found");
+    return 0;
+  }
+  system(strcat(command, full_path));
+  return 0;
+}
 
 int push(node_t ** head, unsigned char * enm, unsigned char * unm, unsigned char * pwd, bool v) {
 //setting up new node and transferring data
+  unsigned int ename_l = strlen(enm);
+  unsigned int uname_l = strlen(unm);
+  unsigned int pwd_l = strlen(pwd);
   if(entry_exists(*head, enm) == 0){puts("Entry by the same name already exists");return 1;}
   node_t * new_node = malloc(sizeof(node_t));
   if(new_node){
-    new_node->data.ename_l = strlen(enm);
-    new_node->data.uname_l = strlen(unm);
-    new_node->data.pwd_l = strlen(pwd);
+    new_node->data.ename_l = ename_l;
+    new_node->data.uname_l = uname_l;
+    new_node->data.pwd_l = pwd_l;
   }
   else{return 1;}
   if(new_node->data.pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
 //calloc is used here cus malloc was doing a wierd
-  new_node->data.ename = calloc(1 , sizeof(unsigned char) * (new_node->data.ename_l + 1));  
-  new_node->data.uname = calloc(1, sizeof(unsigned char) * (new_node->data.uname_l + 1));  
-  new_node->data.pwd = calloc(1, sizeof(unsigned char) * (new_node->data.pwd_l + 1));
+  new_node->data.ename = calloc(1 , sizeof(unsigned char) * (ename_l + 1));  
+  new_node->data.uname = calloc(1, sizeof(unsigned char) * (uname_l + 1));  
+  new_node->data.pwd = calloc(1, sizeof(unsigned char) * (pwd_l + 1));
   if(new_node->data.ename && new_node->data.uname && new_node->data.pwd){
-    strncpy(new_node->data.ename, enm, new_node->data.ename_l);
-    strncpy(new_node->data.uname, unm, new_node->data.uname_l);
-    strncpy(new_node->data.pwd, pwd, new_node->data.pwd_l);
+    strncpy(new_node->data.ename, enm, ename_l);
+    strncpy(new_node->data.uname, unm, uname_l);
+    strncpy(new_node->data.pwd, pwd, pwd_l);
    //pushing new node to the list
   new_node->next = *head;
   *head = new_node;
   return 0;
   }
+  free(new_node);
   return 1;
 }
 
@@ -261,6 +268,8 @@ int free_list(node_t * head){
   if(head == NULL){return 1;}
   node_t * current = head;
   node_t * next;
+//i realise its a bad idea to free everything without error checking, but entries can only exist if all
+//of these were allocated without error
   while(current){
   sodium_memzero(current->data.ename, current->data.ename_l);
   sodium_memzero(current->data.uname, current->data.uname_l);
@@ -277,9 +286,9 @@ int free_list(node_t * head){
 
 int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option, unsigned char * new_value){
   node_t * current = head;
-  int chosen = 0;
+  unsigned int chosen = 0;
   if(strncmp){}
-  int new_value_l = strlen(new_value);
+  unsigned int new_value_l = strlen(new_value);
   if(strncmp(option, "name", new_value_l) == 0){chosen = 1;}
   else if(strncmp(option, "username", new_value_l) == 0){chosen = 2;}
   else if(strncmp(option, "password", new_value_l) == 0){chosen = 3;}
@@ -358,11 +367,11 @@ int rem_spc(node_t ** head, unsigned char * entry_name){
 int get_arg(unsigned char * str, unsigned char *** args){
 //remove newlines before using
   unsigned char ** arg;
-  int arg_count = 0;
+  unsigned int arg_count = 0;
   bool seq = false;
-  int arg_len = 0;
-  int arg_cur = 0;
-  int str_len = strlen(str);
+  unsigned int arg_len = 0;
+  unsigned int arg_cur = 0;
+  unsigned int str_len = strlen(str);
 //figure out how many args there are
   for(int i = 0; i < str_len; i++ ){
     if(str[i] != ' ' && seq == false){ ++arg_count; seq = true;}
@@ -505,9 +514,6 @@ int help(unsigned char * opt){
     puts("help all");
     return 0;
   }
-  //if(strcmp(opt, "") == 0){
-  //  return 0;
-  //}
   if(strcmp(opt, "all") == 0){
     puts("exit - close the program || no args");
     puts("clear - clear the screen || mo args");
@@ -522,6 +528,7 @@ int help(unsigned char * opt){
     puts("load - load entries from file || 2 args");
     puts("save_kf - save entries to file using keyfile|| 3 args");
     puts("load_kf - load entries from file using keyfile || 3 args");
+    puts("shred - securely delete a database || 1 arg");
     return 0;
   }
   if(strcmp(opt, "show") == 0){ 
@@ -606,12 +613,20 @@ int help(unsigned char * opt){
      puts("1: keyfile name");
      puts("2: keyfile length");
      return 0;
-  }
-   if(strcmp(opt, "off") == 0){
-     help_msg = false;
+  }  
+   if(strcmp(opt, "shred") == 0){ 
+     puts("shred - securely delete a database");
+     puts("1: database name");
      return 0;
   }
 
+   if(strcmp(opt, "off") == 0){
+     help_msg = false;
+     system("clear");
+     print_logo();
+     return 0;
+  }
+  printf("Unknown command: %s\n", opt);
 
   return 1;
 }
