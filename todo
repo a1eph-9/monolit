@@ -1,9 +1,9 @@
 redo customisation options - in progress
 add a way to change passgen preferences - in progress
-save last opened db - in progress
+save last opened db - done
 
 
-fix the save bug - done on accident, but still - fixing the other bug made it reappear
+fix the save bug - fixing the other bug made it reappear
 also discovered a possible buffer overflow with arg_len being bigger that path_len, so i fixed that
 DO NOT change arg len, weird crash happens and settings dont load correctly = issue has been fixed
 make new logo - done

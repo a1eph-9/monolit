@@ -108,6 +108,16 @@ int main(int argc, char **argv){
 	else{wrong_arg(3, arg_count);}
     }
 
+    else if(strcmp(args[0], "load_last" ) == 0 ){
+        if(arg_count == 2){
+	  
+	  if(load(&head, last_db , args[1], path) == 0){
+            print_list(head);
+	  }
+	}
+	else{wrong_arg(2, arg_count);}
+    }
+
     else if(strcmp(args[0], "load" ) == 0 ){
         if(arg_count == 3){
 	  if(load(&head, args[1] , args[2], path) == 0){
@@ -218,7 +228,6 @@ int main(int argc, char **argv){
       if(args[i]){free(args[i]);}
     }
     free(args);
-    printf("Last db:  %s\n", last_db);
     }
   }
   return 0;

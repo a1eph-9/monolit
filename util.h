@@ -90,6 +90,20 @@ int load_settings(unsigned char * path, unsigned char * last_db){
   fp = fopen(full_path ,"r");
   free(full_path);
   if(!fp){return 1;}
+  fseek(fp, 0, SEEK_END);
+  unsigned int len = ftell(fp);
+  if(len == 0){fclose(fp); return 1;}
+  if(len >= ARG_MAX){fclose(fp); return 1;}
+  rewind(fp);
+  unsigned char * conf = calloc(1, sizeof(unsigned char) * len);
+  fread(conf, 1, len, fp);
+//load what database was opened last
+  int i = 0;
+  while(i < len && conf[i] != ' '){
+    last_db[i] = conf[i];
+    ++i;
+  }
+//load settings
 
 
   fclose(fp);
@@ -106,8 +120,9 @@ int save_settings(unsigned char * path, unsigned char * last_db){
   fp = fopen(full_path ,"w");
   free(full_path);
   if(!fp){return 1;}
-
-
+  unsigned int last_len = strlen(last_db);
+  fwrite(last_db, 1, last_len, fp);
+  fputc(' ', fp);
   fclose(fp);
   return 0;
 }
@@ -229,7 +244,7 @@ int push(node_t ** head, unsigned char * enm, unsigned char * unm, unsigned char
     new_node->data.pwd_l = pwd_l;
   }
   else{return 1;}
-  if(new_node->data.pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
+  if(pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
 //calloc is used here cus malloc was doing a wierd
   new_node->data.ename = calloc(1 , sizeof(unsigned char) * (ename_l + 1));  
   new_node->data.uname = calloc(1, sizeof(unsigned char) * (uname_l + 1));  

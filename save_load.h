@@ -149,7 +149,7 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     fseek(fp, 0, SEEK_END);
   }
   else{return 1;}
-  int file_size = ftell(fp);
+  unsigned int file_size = ftell(fp);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
   if(file_size % 16 != 0 || file_size <= 72){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
   unsigned char * salt_pass = calloc(1, sizeof(unsigned char) * (pass_len + SALT_L));
@@ -203,10 +203,8 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     free(db_enc);
     return 1;
   }
-
-
 //get the same total len as when saving
-  int total_len = 0;
+  unsigned int total_len = 0;
   for(int i = file_size - 16; i > SALT_L + 64; --i){
     if(db[i] == '\n'){ total_len = i - SALT_L - 64 + 1; break;}
   }
@@ -221,28 +219,29 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     unsigned char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
-    sodium_memzero(pwd_hash , 32);
-    sodium_memzero(comp_integ_hash , 32);
-    sodium_memzero(salt_pass, pass_len + SALT_L);
-    free(salt_pass);
-    free(db);
-    free(db_enc);
-    return 1;
+      sodium_memzero(pwd_hash , 32);
+      sodium_memzero(comp_integ_hash , 32);
+      sodium_memzero(salt_pass, pass_len + SALT_L);
+      free(salt_pass);
+      free(db);
+      free(db_enc);
+      return 1;
     }
   }
   free_list(*head);
   *head = EMPTY_LIST;
 //load entries to head starting from pass_len + SALT_L
-  int ename_l = 0;
-  int uname_l = 0;
-  int pwd_l = 0;
-  int cur = SALT_L + 32 + 32;
-  int current_part = 0;// 0 is entryname, 1 is username, 2 is password
-  int start;
-  int total_entries = 0;
+  unsigned int ename_l = 0;
+  unsigned int uname_l = 0;
+  unsigned int pwd_l = 0;
+  unsigned int cur = SALT_L + 32 + 32;
+  unsigned int current_part = 0;// 0 is entryname, 1 is username, 2 is password
+  unsigned int start;
+  unsigned int total_entries = 0;
   for(int i = SALT_L + 32 + 32; i < file_size - 16; ++i){
     if(db[i] == '\n'){++total_entries;}
   }
+  if(total_entries == 0){return 1;}
   for(int i = 0; i < total_entries; ++i){
 //start to first value
     start = cur;
