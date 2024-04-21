@@ -81,7 +81,6 @@ int load_settings(unsigned char * path, unsigned char * last_db){
   unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
   if(!full_path){return 1;} 
   FILE * fp;
-  memset(full_path, '\0', PATH_L - 1);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   if(fexists(full_path) != 0){
@@ -114,15 +113,15 @@ int save_settings(unsigned char * path, unsigned char * last_db){
   unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
   if(!full_path){return 1;}
   FILE * fp;
-  memset(full_path, '\0', PATH_L - 1);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   fp = fopen(full_path ,"w");
   free(full_path);
   if(!fp){return 1;}
-  unsigned int last_len = strlen(last_db);
-  fwrite(last_db, 1, last_len, fp);
+//save last db
+  fputs(last_db, fp); 
   fputc(' ', fp);
+//save settings
   fclose(fp);
   return 0;
 }
@@ -134,7 +133,6 @@ int round_up(int len, int block_size){
 }
 
 
-//make settings to do this shit
 unsigned char * pass_gen(int len){
   unsigned int available = 0;
   if(up){available += UPPER_L -1;}
@@ -541,6 +539,7 @@ int help(unsigned char * opt){
     puts("new_kf - create a new keyfile || 2 args");
     puts("save - save entries to file || 2 args");
     puts("load - load entries from file || 2 args");
+    puts("load_last - load last used database || 1 arg");
     puts("save_kf - save entries to file using keyfile|| 3 args");
     puts("load_kf - load entries from file using keyfile || 3 args");
     puts("shred - securely delete a database || 1 arg");
@@ -620,6 +619,11 @@ int help(unsigned char * opt){
      puts("load - load entries from a database, args: ");
      puts("1: database name");
      puts("2: password");
+     return 0;
+  }
+   if(strcmp(opt, "load_last") == 0){ 
+    puts("load_last - load last used database, args:");
+     puts("1: password");
      return 0;
   }
 

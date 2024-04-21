@@ -16,18 +16,18 @@ int main(int argc, char **argv){
     puts("Could not initiate libsodium");
     return 1;
   }
-  unsigned char path[PATH_L];
+  unsigned char path[PATH_L + 1];
+  memset(path, '\0', PATH_L + 1);
   unsigned char arg_input[ARG_MAX];
   unsigned char **args;
   node_t * head = EMPTY_LIST;
   unsigned char * keyfile;
   int key_password;
   unsigned char * key_pass;
-  unsigned char last_db[ARG_MAX];
-  memset(path, '\0', ARG_MAX - 1);
+  unsigned char last_db[ARG_MAX + 1];
+  memset(last_db, '\0', ARG_MAX + 1);
   unsigned char name[64];
   getlogin_r(name, 64);
-  memset(path, '\0', PATH_L - 1);
   strncat(path, "/home/", PATH_L - 1);
   strncat(path, name, PATH_L - 1);
   strncat(path, "/.monolit", PATH_L - 1);
