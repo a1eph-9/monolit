@@ -1,8 +1,8 @@
-redo customisation options - in progress
 add a way to change passgen preferences - in progress
 fix the save bug - fixing the other bug made it reappear
-enable the moving of the binary to the bin dir - do when finished
 
+
+redo customisation options - done
 make new logo - done
 finish work on file integrity checker - done
 add shred function - done

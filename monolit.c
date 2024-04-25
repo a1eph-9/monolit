@@ -16,17 +16,17 @@ int main(int argc, char **argv){
     puts("Could not initiate libsodium");
     return 1;
   }
-  unsigned char path[PATH_L + 1];
+  char path[PATH_L + 1];
   memset(path, '\0', PATH_L + 1);
-  unsigned char arg_input[ARG_MAX];
-  unsigned char **args;
+  char arg_input[ARG_MAX];
+  char **args;
   node_t * head = EMPTY_LIST;
-  unsigned char * keyfile;
+  char * keyfile;
   int key_password;
-  unsigned char * key_pass;
-  unsigned char last_db[ARG_MAX + 1];
+  char * key_pass;
+  char last_db[ARG_MAX + 1];
   memset(last_db, '\0', ARG_MAX + 1);
-  unsigned char name[64];
+  char name[64];
   getlogin_r(name, 64);
   strncat(path, "/home/", PATH_L - 1);
   strncat(path, name, PATH_L - 1);
@@ -34,8 +34,8 @@ int main(int argc, char **argv){
   if (stat(path, &st) == -1) {
     mkdir(path, 0700);
   }
-  load_settings(path, last_db);
   system("clear");
+  load_settings(path, last_db);
   print_logo();
   if(help_msg == true){puts("Use \"help\" to introduce yourself, to turn this message off do \"help off\"");}
   while(1){
@@ -71,7 +71,7 @@ int main(int argc, char **argv){
         if(arg_count == 4 ){
 	  int pass_len = strtol(args[3], NULL, 10);
 	  if(pass_len > 0){
-	  unsigned char * pass = pass_gen(pass_len);
+	  char * pass = pass_gen(pass_len);
           push(&head, args[1], args[2], pass, true);
 	  sodium_memzero(pass, pass_len);
 	  free(pass);
@@ -109,8 +109,7 @@ int main(int argc, char **argv){
     }
 
     else if(strcmp(args[0], "load_last" ) == 0 ){
-        if(arg_count == 2){
-	  
+        if(arg_count == 2 ){
 	  if(load(&head, last_db , args[1], path) == 0){
             print_list(head);
 	  }
@@ -133,7 +132,7 @@ int main(int argc, char **argv){
 	  keyfile = load_keyfile(args[3], path);
 	  if(keyfile){
 	    key_password = strlen(args[2]) + strlen(keyfile);
-	    key_pass = calloc(1, sizeof(unsigned char) * (key_password + 1));
+	    key_pass = calloc(1, sizeof(char) * (key_password + 1));
 	    strncpy(key_pass, keyfile, key_password);
 	    strncat(key_pass, args[2], key_password);
 	    if(save(head, args[1], key_pass, path)){ 
@@ -154,7 +153,7 @@ int main(int argc, char **argv){
 	  keyfile = load_keyfile(args[3], path);
 	  if(keyfile){
 	    key_password = strlen(args[2]) + strlen(keyfile);
-	    key_pass = calloc(1, sizeof(unsigned char) * (key_password + 1));
+	    key_pass = calloc(1, sizeof(char) * (key_password + 1));
 	    strncpy(key_pass, keyfile, key_password);
 	    strncat(key_pass, args[2], key_password);
 	    if(load(&head, args[1], key_pass, path) == 0){
@@ -202,7 +201,7 @@ int main(int argc, char **argv){
         if(arg_count == 2){
 	  int rand_l = strtol(args[1], NULL, 10);
 	  if(rand_l > 0){
-	    unsigned char * rand = pass_gen(rand_l);
+	    char * rand = pass_gen(rand_l);
 	    printf("Random password: %s\n", rand);
 	    sodium_memzero(rand, rand_l);
 	    free(rand);

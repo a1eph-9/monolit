@@ -25,9 +25,9 @@ bool spec = true;
 bool help_msg = true;
 
 typedef struct entry{
-  unsigned char * ename;
-  unsigned char * uname;
-  unsigned char * pwd;
+  char * ename;
+  char * uname;
+  char * pwd;
   unsigned int ename_l;
   unsigned int uname_l;
   unsigned int pwd_l;
@@ -38,8 +38,7 @@ typedef struct node_t{
   struct node_t * next;
 }node_t;
 
-int print_logo(){
-
+void print_logo(){
 puts("  ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
 puts("  ████| ████|  ██╔═══██_ ████_  ██| ██╔═══██| ██|      ██| |__██___| ");
 puts("  ██|████|██|  ██║   ██| ██|██_ ██| ██║   ██| ██|      ██|    ██| ");
@@ -49,13 +48,13 @@ puts("  |_|     |_|   |_____|  |_|  |___|  |_____|  |______| |_|    |_| ");
 puts("  A simple pasword manager written in C\n");
 }
 
-int wrong_arg(int ex, int go){
+void wrong_arg(int ex, int go){
   if(go < ex){
     puts("Missing arguments");
   }
   else{puts("Too many arguments");}
 }
-int fexists(unsigned char *name){
+int fexists(char *name){
   FILE *fp = fopen(name,"r");
   if(fp){
     fclose(fp);
@@ -65,7 +64,7 @@ int fexists(unsigned char *name){
 }
 
 //self explanitory
-int entry_exists(node_t * head, unsigned char * entry_name){
+int entry_exists(node_t * head, char * entry_name){
   if(!head){return 1;}
   node_t * current = head;
   while(current){
@@ -77,10 +76,11 @@ int entry_exists(node_t * head, unsigned char * entry_name){
   return 1;
 }
 
-int load_settings(unsigned char * path, unsigned char * last_db){
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+int load_settings(char * path, char * last_db){
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;} 
   FILE * fp;
+  uint8_t settings = 0;
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   if(fexists(full_path) != 0){
@@ -92,9 +92,8 @@ int load_settings(unsigned char * path, unsigned char * last_db){
   fseek(fp, 0, SEEK_END);
   unsigned int len = ftell(fp);
   if(len == 0){fclose(fp); return 1;}
-  if(len >= ARG_MAX){fclose(fp); return 1;}
   rewind(fp);
-  unsigned char * conf = calloc(1, sizeof(unsigned char) * len);
+  char * conf = calloc(1, sizeof(char) * len);
   fread(conf, 1, len, fp);
 //load what database was opened last
   int i = 0;
@@ -103,16 +102,28 @@ int load_settings(unsigned char * path, unsigned char * last_db){
     ++i;
   }
 //load settings
-
-
+  if(i < len){
+  settings = conf[i + 1];
+  }
+  if(settings % 2 != 1){ help_msg = false;}
+  settings = settings >> 1;
+  if(settings % 2 != 1){ spec = false;}
+  settings = settings >> 1;
+  if(settings % 2 != 1){ num = false;}
+  settings = settings >> 1;
+  if(settings % 2 != 1){ low = false;}
+  settings = settings >> 1;
+  if(settings % 2 != 1){ up = false;}
+  free(conf);
   fclose(fp);
   return 0;
 }
 
-int save_settings(unsigned char * path, unsigned char * last_db){
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+int save_settings(char * path, char * last_db){
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;}
   FILE * fp;
+  uint8_t settings = 0;
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/config", PATH_L - 1);
   fp = fopen(full_path ,"w");
@@ -121,7 +132,17 @@ int save_settings(unsigned char * path, unsigned char * last_db){
 //save last db
   fputs(last_db, fp); 
   fputc(' ', fp);
-//save settings
+  if(up){++settings;}
+  settings = settings << 1;
+  if(low){++settings;}
+  settings = settings << 1;
+  if(num){++settings;}
+  settings = settings << 1;
+  if(spec){++settings;}
+  settings = settings << 1;
+  if(help_msg){++settings;}
+  fputc(settings, fp);
+  //save settings
   fclose(fp);
   return 0;
 }
@@ -133,8 +154,8 @@ int round_up(int len, int block_size){
 }
 
 
-unsigned char * pass_gen(int len){
-  unsigned int available = 0;
+char * pass_gen(int len){
+  int available = 0;
   if(up){available += UPPER_L -1;}
   if(low){available += LOWER_L -1;}
   if(num){available += NUM_L -1;}
@@ -142,7 +163,7 @@ unsigned char * pass_gen(int len){
     available += SPEC_L -1;
     available += SPEC_L - 1;
   }
-  unsigned char * chars = calloc(1, sizeof(unsigned char) * available);
+  char * chars = calloc(1, sizeof(char) * available);
   if(up){strncat(chars, UPPER, UPPER_L-1);}
   if(low){strncat(chars, LOWER, LOWER_L-1);}
   if(num){strncat(chars, NUM, NUM_L-1);}
@@ -150,15 +171,15 @@ unsigned char * pass_gen(int len){
     strncat(chars, SPEC, SPEC_L-1);
     strncat(chars, SPEC, SPEC_L-1);
   }
-  unsigned char * pass = calloc(1, sizeof(unsigned char) * (len + 1));
+  char * pass = calloc(1, sizeof(char) * (len + 1));
   for(int i = 0; i < len; ++i){
     pass[i] = chars[randombytes_uniform(available)];
   }
   return pass;
 }
 
-int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path){
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+int new_keyfile(char * name, char * len, char * path){
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -167,12 +188,12 @@ int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path)
   int key_len = strtol(len, NULL, 10);
   if(key_len <= 0){puts("Lenght can not be less than 1"); return 1;}
   if(fexists(full_path) == 0){
-    printf("The file %s already exists\n");
+    printf("The file %s already exists\n", name);
     return 1;
   }
   FILE * fp = fopen(full_path, "w");
   free(full_path);
-  unsigned char * key = pass_gen(key_len);
+  char * key = pass_gen(key_len);
   if(key && fp){
     fwrite("mlkf", 1, 4, fp);
     fwrite(key, 1, key_len, fp);
@@ -185,11 +206,11 @@ int new_keyfile(unsigned char * name, unsigned char * len, unsigned char * path)
   return 1;
 }
 
-unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+char * load_keyfile(char * name, char * path){
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 0;}
-  unsigned char verif[4];
-  unsigned char * keyfile;
+  char verif[4];
+  char * keyfile;
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
   strncat(full_path, name, PATH_L - 1);
@@ -203,9 +224,10 @@ unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
   fseek(fp, 0, SEEK_END);
   unsigned int kf_len = ftell(fp);
   rewind(fp);
+  if(kf_len <= 4){return 0;}
   fread(verif, 1, 4, fp);
   if(strncmp(verif, "mlkf", 4) != 0){fclose(fp); return 0;}
-  keyfile = calloc(1, sizeof(unsigned char) * (kf_len - 3));
+  keyfile = calloc(1, sizeof(char) * (kf_len - 3));
   if(keyfile){
     fread(keyfile, 1, kf_len - 4, fp);
   }
@@ -213,9 +235,9 @@ unsigned char * load_keyfile(unsigned char * name, unsigned char * path){
   return keyfile;
 }
 
-int shred(unsigned char * name, unsigned char * path){
-  unsigned char full_path[PATH_L];
-  unsigned char command[] = {"shred -n 16 -z -u "};
+int shred(char * name, char * path){
+  char full_path[PATH_L];
+  char command[] = {"shred -n 16 -z -u "};
   memset(full_path, '\0', PATH_L);
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -225,11 +247,15 @@ int shred(unsigned char * name, unsigned char * path){
     puts("File was not found");
     return 0;
   }
+  printf("Are you sure %s is the correct database [n/y]? ", name);
+  char ch = getchar();
+  while(getchar() != '\n');
+  if(ch != 'y' && ch != 'Y'){return 1;}
   system(strcat(command, full_path));
   return 0;
 }
 
-int push(node_t ** head, unsigned char * enm, unsigned char * unm, unsigned char * pwd, bool v) {
+int push(node_t ** head, char * enm, char * unm, char * pwd, bool v) {
 //setting up new node and transferring data
   unsigned int ename_l = strlen(enm);
   unsigned int uname_l = strlen(unm);
@@ -244,9 +270,9 @@ int push(node_t ** head, unsigned char * enm, unsigned char * unm, unsigned char
   else{return 1;}
   if(pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
 //calloc is used here cus malloc was doing a wierd
-  new_node->data.ename = calloc(1 , sizeof(unsigned char) * (ename_l + 1));  
-  new_node->data.uname = calloc(1, sizeof(unsigned char) * (uname_l + 1));  
-  new_node->data.pwd = calloc(1, sizeof(unsigned char) * (pwd_l + 1));
+  new_node->data.ename = calloc(1 , sizeof(char) * (ename_l + 1));  
+  new_node->data.uname = calloc(1, sizeof(char) * (uname_l + 1));  
+  new_node->data.pwd = calloc(1, sizeof(char) * (pwd_l + 1));
   if(new_node->data.ename && new_node->data.uname && new_node->data.pwd){
     strncpy(new_node->data.ename, enm, ename_l);
     strncpy(new_node->data.uname, unm, uname_l);
@@ -273,8 +299,8 @@ int print_list(node_t * head) {
       printf("Username:    %s  %d\n\n", current->data.uname, current->data.uname_l);
     }
     current = current->next;
-}
-
+  }
+  return 0;
 }
 //memzeroes and frees every member of the list to avoid memory and data leaks
 int free_list(node_t * head){
@@ -297,10 +323,9 @@ int free_list(node_t * head){
   return 0;
 }
 
-int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option, unsigned char * new_value){
+int edit_entry(node_t * head, char * entry_name, char * option, char * new_value){
   node_t * current = head;
-  unsigned int chosen = 0;
-  if(strncmp){}
+  uint8_t chosen = 0;
   unsigned int new_value_l = strlen(new_value);
   if(strncmp(option, "name", new_value_l) == 0){chosen = 1;}
   else if(strncmp(option, "username", new_value_l) == 0){chosen = 2;}
@@ -313,7 +338,7 @@ int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option
       case 1:
         sodium_memzero(current->data.ename, current->data.ename_l);
 	free(current->data.ename);
-	current->data.ename = calloc(1, sizeof(unsigned char) * new_value_l);
+	current->data.ename = calloc(1, sizeof(char) * new_value_l);
 	strncpy(current->data.ename, new_value, new_value_l);
 	current->data.ename_l = new_value_l;
         return 0;
@@ -321,7 +346,7 @@ int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option
 //edit username
           sodium_memzero(current->data.uname, current->data.uname_l);
 	  free(current->data.uname);
-	  current->data.uname = calloc(1, sizeof(unsigned char) * new_value_l);
+	  current->data.uname = calloc(1, sizeof(char) * new_value_l);
 	  strncpy(current->data.uname, new_value, new_value_l);
 	  current->data.uname_l = new_value_l;
           return 0;
@@ -329,7 +354,7 @@ int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option
 //edit password
           sodium_memzero(current->data.pwd, current->data.pwd_l);
 	  free(current->data.pwd);
-	  current->data.pwd = calloc(1, sizeof(unsigned char) * new_value_l);
+	  current->data.pwd = calloc(1, sizeof(char) * new_value_l);
 	  strncpy(current->data.pwd, new_value, new_value_l);
 	  current->data.pwd_l = new_value_l;
           return 0;
@@ -341,7 +366,7 @@ int edit_entry(node_t * head, unsigned char * entry_name, unsigned char * option
   return 1;
 }
 
-int rem_spc(node_t ** head, unsigned char * entry_name){
+int rem_spc(node_t ** head, char * entry_name){
 //search the list for an entry and then remove that entry
   if(*head == NULL){puts("No entries loaded");return 1;}
   node_t * current = *head;
@@ -377,9 +402,9 @@ int rem_spc(node_t ** head, unsigned char * entry_name){
   return 1;
 }
 
-int get_arg(unsigned char * str, unsigned char *** args){
+int get_arg(char * str, char *** args){
 //remove newlines before using
-  unsigned char ** arg;
+  char ** arg;
   unsigned int arg_count = 0;
   bool seq = false;
   unsigned int arg_len = 0;
@@ -391,13 +416,13 @@ int get_arg(unsigned char * str, unsigned char *** args){
     else if(str[i] == ' ' && seq == true){ seq = false; }
   }
 //make room
-  arg = calloc(1, sizeof(unsigned char *) * arg_count);
+  arg = calloc(1, sizeof(char *) * arg_count);
 //figure out the length of each argument
   for(int i = 0; i < str_len; i++ ){
     if(str[i] != ' '){ arg_len++ ;}
 //i barely understand how this works but it does so leave it
-    if( i != 0 && str[i] == ' ' && str[i - 1] != ' ' || str[i+1] == '\0' && str[i] != ' '){
-      arg[arg_cur] = calloc(1, sizeof(unsigned char) * (arg_len + 1));
+    if( (i != 0 && str[i] == ' ' && str[i - 1] != ' ') || (str[i+1] == '\0' && str[i] != ' ')){
+      arg[arg_cur] = calloc(1, sizeof(char) * (arg_len + 1));
       ++arg_cur;
       arg_len = 0;
     }
@@ -407,7 +432,7 @@ int get_arg(unsigned char * str, unsigned char *** args){
   arg_cur = 0;
   for(int i = 0; i < str_len; i++ ){
     if(str[i] != ' '){ arg[arg_cur][arg_len] = str[i]; ++arg_len; }
-    if(i != 0 && str[i] == ' ' && str[i - 1] != ' ' || str[i+1] == '\0' && str[i] != ' '){
+    if((i != 0 && str[i] == ' ' && str[i - 1] != ' ') || (str[i+1] == '\0' && str[i] != ' ')){
       arg_len = 0;
       ++arg_cur;
     }
@@ -419,7 +444,7 @@ int get_arg(unsigned char * str, unsigned char *** args){
 
 
 
-int print_spc(node_t * head, unsigned char * enm){
+int print_spc(node_t * head, char * enm){
   node_t * current = head;
   while(current){
     if(strncmp(current->data.ename, enm, current->data.ename_l) == 0){
@@ -442,7 +467,7 @@ int print_spc(node_t * head, unsigned char * enm){
 
 
 
-int encrypt(unsigned char plain_text[], unsigned char chiper_text[], unsigned char key[] , unsigned char iv[], unsigned long ciphertext_length) {
+int encrypt(char plain_text[], char chiper_text[], char key[] , char iv[], unsigned int ciphertext_length) {
     symmetric_CBC cbc;
     int err;
     err = register_cipher(&aes_desc);
@@ -481,7 +506,7 @@ int encrypt(unsigned char plain_text[], unsigned char chiper_text[], unsigned ch
 
 
 
-int decrypt(unsigned char chiper_text[], unsigned char plain_text[], unsigned char key[], unsigned char iv[], unsigned long chipertext_length) {
+int decrypt(char chiper_text[], char plain_text[], char key[], char iv[], unsigned int chipertext_length) {
     symmetric_CBC cbc;
     int err;
     err = register_cipher(&aes_desc);
@@ -519,7 +544,7 @@ int decrypt(unsigned char chiper_text[], unsigned char plain_text[], unsigned ch
 }
 
 
-int help(unsigned char * opt){
+int help(char * opt){
   if(strcmp(opt, "0") == 0){
     puts("How to find the details of any command:");
     puts("help *command name*");
@@ -534,6 +559,7 @@ int help(unsigned char * opt){
     puts("show_all - show all entries || no args");
     puts("new - make a new entry || 3 args");
     puts("new_r - make a new entry with a random password || 3 args");
+    puts("r_pass - generate a random password || 1 arg");
     puts("remove - remove a specific entry || 1 arg");
     puts("edit - edit an entry || 3 args");
     puts("new_kf - create a new keyfile || 2 args");

@@ -1,11 +1,11 @@
 #define SALT_L 16
 
 
-int save(node_t * head, unsigned char * name, unsigned char * password, unsigned char * path){
+int save(node_t * head, char * name, char * password, char * path){
   if(!head){return 1;}
   int pass_len = strlen(password);
   if(pass_len < 8){puts("A password length lower than 8 is not allowed"); return 1;}
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -13,20 +13,20 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
   strncat(full_path, ".mldb", PATH_L - 1);
   if(fexists(full_path) == 0){
   printf("The file %s already exists, are you sure the password is correct [n/y]? ", name);
-  unsigned char ch = getchar();
+  char ch = getchar();
   while(getchar() != '\n');
   if(ch != 'y' && ch != 'Y'){free(full_path);return 1;}
   }
   hash_state md;
-  unsigned char iv[16];//init vec for enc
-  unsigned char salt[SALT_L];
-  unsigned char hash[32];//hash of salted password
-  unsigned char integ_hash[32];//hash of salted password
-  unsigned char key[32];//hash of password used as key
-  unsigned char * salt_pass = calloc(1 ,sizeof(char) * (pass_len + SALT_L + 1));//salted password
+  char iv[16];//init vec for enc
+  char salt[SALT_L];
+  char hash[32];//hash of salted password
+  char integ_hash[32];//hash of salted password
+  char key[32];//hash of password used as key
+  char * salt_pass = calloc(1 ,sizeof(char) * (pass_len + SALT_L + 1));//salted password
   if(!salt_pass){free(full_path);return 1;}
-  unsigned char * db = NULL;//decrypted database
-  unsigned char * db_enc = NULL;//encrypted database
+  char * db = NULL;//decrypted database
+  char * db_enc = NULL;//encrypted database
   unsigned int enc_len = 0;//length of encrypted text
   FILE * fp = fopen(full_path, "w");
   free(full_path);
@@ -97,7 +97,7 @@ int save(node_t * head, unsigned char * name, unsigned char * password, unsigned
     fflush(fp); 
   }
   else{puts("Error encrypting database");}
-puts;
+
 //memzero and free everything to avoid data leak
   sodium_memzero(salt, SALT_L);
   sodium_memzero(hash, 32);
@@ -123,8 +123,8 @@ puts;
 }
 
 
-int load(node_t ** head, unsigned char * name, unsigned char * password, unsigned char * path){
-  unsigned char * full_path = calloc(1, sizeof(unsigned char) * PATH_L);
+int load(node_t ** head, char * name, char * password, char * path){
+  char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -134,15 +134,15 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     puts("File not found");
     return 1;
   }
-  unsigned char salt[SALT_L];
+  char salt[SALT_L];
   hash_state md;
   unsigned int pass_len = strlen(password);
-  unsigned char iv[16];//init vec for dec
-  unsigned char comp_hash[32];//comparation hash read from file
-  unsigned char salt_hash[32];//hash generated from password and salt from file
-  unsigned char integ_hash[32];//hash to check integrity of file
-  unsigned char comp_integ_hash[32];//hash to check integrity of file
-  unsigned char pwd_hash[32];//hash generated from password
+  char iv[16];//init vec for dec
+  char comp_hash[32];//comparation hash read from file
+  char salt_hash[32];//hash generated from password and salt from file
+  char integ_hash[32];//hash to check integrity of file
+  char comp_integ_hash[32];//hash to check integrity of file
+  char pwd_hash[32];//hash generated from password
   FILE * fp = fopen(full_path ,"r");
   free(full_path);
   if(fp){
@@ -152,11 +152,11 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   unsigned int file_size = ftell(fp);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
   if(file_size % 16 != 0 || file_size <= 72){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
-  unsigned char * salt_pass = calloc(1, sizeof(unsigned char) * (pass_len + SALT_L));
+  char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L));
   rewind(fp);
   fread(iv, 1, 16, fp);
-  unsigned char * db = calloc(1, sizeof(unsigned char) * file_size - 16);//decrypted database
-  unsigned char * db_enc = calloc(1, sizeof(unsigned char) * file_size - 16); //encrypted database
+  char * db = calloc(1, sizeof(char) * file_size - 16);//decrypted database
+  char * db_enc = calloc(1, sizeof(char) * file_size - 16); //encrypted database
   fread(db_enc, 1, file_size - 16, fp);
   fclose(fp);
 
@@ -216,7 +216,7 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   if(sodium_memcmp(integ_hash, comp_integ_hash, 32) != 0){
     puts("Database has been corrupted or tampered with");
     printf("Would you still like to open it, this may cause a crash? [n/y]? ");
-    unsigned char ch = getchar();
+    char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
       sodium_memzero(pwd_hash , 32);
@@ -235,7 +235,7 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
   unsigned int uname_l = 0;
   unsigned int pwd_l = 0;
   unsigned int cur = SALT_L + 32 + 32;
-  unsigned int current_part = 0;// 0 is entryname, 1 is username, 2 is password
+  uint8_t current_part = 0;// 0 is entryname, 1 is username, 2 is password
   unsigned int start;
   unsigned int total_entries = 0;
   for(int i = SALT_L + 32 + 32; i < file_size - 16; ++i){
@@ -256,9 +256,9 @@ int load(node_t ** head, unsigned char * name, unsigned char * password, unsigne
     ++cur;
     }
 //allocate space for those parts
-    unsigned char * ename = calloc(1, sizeof(unsigned char) * (ename_l + 1));
-    unsigned char * uname = calloc(1, sizeof(unsigned char) * (uname_l + 1));
-    unsigned char * pwd = calloc(1, sizeof(unsigned char) * (pwd_l + 1));
+    char * ename = calloc(1, sizeof(char) * (ename_l + 1));
+    char * uname = calloc(1, sizeof(char) * (uname_l + 1));
+   char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
 //save current then copy everything starting from start
     int save = cur + 1;
     cur = start;
