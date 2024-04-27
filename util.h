@@ -15,7 +15,7 @@
 #define NUM_L 10
 #define SPEC "!@#$%^&*()-_=+`~[]{}\\|;:'\",.<>/?"
 #define SPEC_L 32
-#define ARG_MAX 256
+#define ARG_MAX 512
 #define PATH_L ARG_MAX + 64
 
 bool up = true;
@@ -39,13 +39,13 @@ typedef struct node_t{
 }node_t;
 
 void print_logo(){
-puts("  ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
-puts("  ████| ████|  ██╔═══██_ ████_  ██| ██╔═══██| ██|      ██| |__██___| ");
-puts("  ██|████|██|  ██║   ██| ██|██_ ██| ██║   ██| ██|      ██|    ██| ");
-puts("  ██||██_|██|  ██║   ██| ██||██_██| ██║   ██| ██|      ██|    ██| ");
-puts("  ██| __| ██|  |██████_| ██| |████| |██████_| ███████_ ██|    ██| ");
-puts("  |_|     |_|   |_____|  |_|  |___|  |_____|  |______| |_|    |_| ");
-puts("  A simple pasword manager written in C\n");
+puts("   ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
+puts("   ████| ████|  ██____██_ ████_  ██| ██____██| ██|      ██| |__██___| ");
+puts("   ██|████|██|  ██|   ██| ██|██_ ██| ██|   ██| ██|      ██|    ██| ");
+puts("   ██||██_|██|  ██|   ██| ██||██_██| ██|   ██| ██|      ██|    ██| ");
+puts("   ██| |_| ██|  |██████_| ██| |████| |██████_| ███████_ ██|    ██| ");
+puts("   |_|     |_|   |_____|  |_|  |___|  |_____|  |______| |_|    |_| ");
+puts("   A simple pasword manager written in C\n");
 }
 
 void wrong_arg(int ex, int go){
@@ -77,7 +77,7 @@ int entry_exists(node_t * head, char * entry_name){
 }
 
 int load_settings(char * path, char * last_db){
-  char * full_path = calloc(1, sizeof(char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;} 
   FILE * fp;
   uint8_t settings = 0;
@@ -93,7 +93,7 @@ int load_settings(char * path, char * last_db){
   unsigned int len = ftell(fp);
   if(len == 0){fclose(fp); return 1;}
   rewind(fp);
-  char * conf = calloc(1, sizeof(char) * len);
+  char * conf = calloc(1, sizeof(char) * (len + 1));
   fread(conf, 1, len, fp);
 //load what database was opened last
   int i = 0;
@@ -102,9 +102,11 @@ int load_settings(char * path, char * last_db){
     ++i;
   }
 //load settings
-  if(i < len){
+  if(i + 1 < len){
   settings = conf[i + 1];
   }
+  free(conf);
+  if(settings != 0){
   if(settings % 2 != 1){ help_msg = false;}
   settings = settings >> 1;
   if(settings % 2 != 1){ spec = false;}
@@ -114,13 +116,14 @@ int load_settings(char * path, char * last_db){
   if(settings % 2 != 1){ low = false;}
   settings = settings >> 1;
   if(settings % 2 != 1){ up = false;}
-  free(conf);
   fclose(fp);
   return 0;
+  }
+  return 1;
 }
 
 int save_settings(char * path, char * last_db){
-  char * full_path = calloc(1, sizeof(char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;}
   FILE * fp;
   uint8_t settings = 0;
@@ -163,7 +166,7 @@ char * pass_gen(int len){
     available += SPEC_L -1;
     available += SPEC_L - 1;
   }
-  char * chars = calloc(1, sizeof(char) * available);
+  char * chars = calloc(1, sizeof(char) * (available + 1));
   if(up){strncat(chars, UPPER, UPPER_L-1);}
   if(low){strncat(chars, LOWER, LOWER_L-1);}
   if(num){strncat(chars, NUM, NUM_L-1);}
@@ -179,7 +182,7 @@ char * pass_gen(int len){
 }
 
 int new_keyfile(char * name, char * len, char * path){
-  char * full_path = calloc(1, sizeof(char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -207,7 +210,7 @@ int new_keyfile(char * name, char * len, char * path){
 }
 
 char * load_keyfile(char * name, char * path){
-  char * full_path = calloc(1, sizeof(char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 0;}
   char verif[4];
   char * keyfile;
@@ -224,7 +227,7 @@ char * load_keyfile(char * name, char * path){
   fseek(fp, 0, SEEK_END);
   unsigned int kf_len = ftell(fp);
   rewind(fp);
-  if(kf_len <= 4){return 0;}
+  if(kf_len <= 4){fclose(fp);return 0;}
   fread(verif, 1, 4, fp);
   if(strncmp(verif, "mlkf", 4) != 0){fclose(fp); return 0;}
   keyfile = calloc(1, sizeof(char) * (kf_len - 3));
@@ -307,8 +310,6 @@ int free_list(node_t * head){
   if(head == NULL){return 1;}
   node_t * current = head;
   node_t * next;
-//i realise its a bad idea to free everything without error checking, but entries can only exist if all
-//of these were allocated without error
   while(current){
   sodium_memzero(current->data.ename, current->data.ename_l);
   sodium_memzero(current->data.uname, current->data.uname_l);
@@ -338,7 +339,7 @@ int edit_entry(node_t * head, char * entry_name, char * option, char * new_value
       case 1:
         sodium_memzero(current->data.ename, current->data.ename_l);
 	free(current->data.ename);
-	current->data.ename = calloc(1, sizeof(char) * new_value_l);
+	current->data.ename = calloc(1, sizeof(char) * (new_value_l + 1));
 	strncpy(current->data.ename, new_value, new_value_l);
 	current->data.ename_l = new_value_l;
         return 0;
@@ -347,14 +348,14 @@ int edit_entry(node_t * head, char * entry_name, char * option, char * new_value
           sodium_memzero(current->data.uname, current->data.uname_l);
 	  free(current->data.uname);
 	  current->data.uname = calloc(1, sizeof(char) * new_value_l);
-	  strncpy(current->data.uname, new_value, new_value_l);
+	  strncpy(current->data.uname, new_value, (new_value_l + 1));
 	  current->data.uname_l = new_value_l;
           return 0;
       case 3:
 //edit password
           sodium_memzero(current->data.pwd, current->data.pwd_l);
 	  free(current->data.pwd);
-	  current->data.pwd = calloc(1, sizeof(char) * new_value_l);
+	  current->data.pwd = calloc(1, sizeof(char) * (new_value_l + 1));
 	  strncpy(current->data.pwd, new_value, new_value_l);
 	  current->data.pwd_l = new_value_l;
           return 0;

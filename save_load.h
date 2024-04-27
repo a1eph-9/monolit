@@ -5,7 +5,7 @@ int save(node_t * head, char * name, char * password, char * path){
   if(!head){return 1;}
   int pass_len = strlen(password);
   if(pass_len < 8){puts("A password length lower than 8 is not allowed"); return 1;}
-  char * full_path = calloc(1, sizeof(char) * PATH_L);
+  char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;}
   strncat(full_path, path, PATH_L - 1);
   strncat(full_path, "/", PATH_L - 1);
@@ -62,7 +62,7 @@ int save(node_t * head, char * name, char * password, char * path){
   sha256_init(&md);
   sha256_process(&md, salt_pass, pass_len + SALT_L);
   sha256_done(&md, hash);
-  db = calloc(sizeof(char) * (total_len + SALT_L + 64) ,1);
+  db = calloc(sizeof(char) * (total_len + SALT_L + 64 + 1) ,1);
   enc_len = round_up(total_len + SALT_L + 64, 16);
   db_enc = calloc(1, sizeof(char) * (enc_len) + 1);
   current = head;
@@ -152,11 +152,11 @@ int load(node_t ** head, char * name, char * password, char * path){
   unsigned int file_size = ftell(fp);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
   if(file_size % 16 != 0 || file_size <= 72){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
-  char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L));
+  char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
   rewind(fp);
   fread(iv, 1, 16, fp);
-  char * db = calloc(1, sizeof(char) * file_size - 16);//decrypted database
-  char * db_enc = calloc(1, sizeof(char) * file_size - 16); //encrypted database
+  char * db = calloc(1, sizeof(char) * (file_size - 16 + 1));//decrypted database
+  char * db_enc = calloc(1, sizeof(char) * (file_size - 16)); //encrypted database
   fread(db_enc, 1, file_size - 16, fp);
   fclose(fp);
 
