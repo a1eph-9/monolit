@@ -263,8 +263,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     char * ename = calloc(1, sizeof(char) * (ename_l + 1));
     char * uname = calloc(1, sizeof(char) * (uname_l + 1));
     char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
-//save current then copy everything starting from start
-   int save = cur + 1;
+//copy everything starting from start
    cur = start;
 //Copy everything over
     for(int i = cur; i < cur + ename_l; ++i){
@@ -278,8 +277,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     for(int i = cur; i < cur + pwd_l; ++i){
       pwd[i - cur] = db[i];
     }
-//go to start of next entry data
-    cur = save;
+    cur += uname_l + 1;
 //push new entry
     push(head, ename, uname, pwd, false);
 //memzero and free everything
