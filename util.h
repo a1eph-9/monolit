@@ -295,12 +295,8 @@ int print_list(node_t * head) {
   if(!head){return 1;}
   node_t * current = head;
   while (current) {
-    if(current->data.ename){
-      printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
-    }		
-    if(current->data.uname){
-      printf("Username:    %s  %d\n\n", current->data.uname, current->data.uname_l);
-    }
+    printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
+    printf("Username:    %s  %d\n\n", current->data.uname, current->data.uname_l);
     current = current->next;
   }
   return 0;
@@ -449,15 +445,9 @@ int print_spc(node_t * head, char * enm){
   node_t * current = head;
   while(current){
     if(strcmp(enm, current->data.ename) == 0){
-      if(current->data.ename){
-        printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
-      }
-      if(current->data.uname){
-        printf("Username:    %s  %d\n", current->data.uname, current->data.uname_l);
-      }
-      if(current->data.pwd){
-        printf("Password:    %s  %d\n", current->data.pwd, current->data.pwd_l);
-      }
+      printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
+      printf("Username:    %s  %d\n", current->data.uname, current->data.uname_l);
+      printf("Password:    %s  %d\n", current->data.pwd, current->data.pwd_l);
       return 0;
     }
     current = current->next;
