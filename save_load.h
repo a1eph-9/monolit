@@ -208,7 +208,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   for(int i = file_size - 16; i > SALT_L + 64; --i){
     if(db[i] == '\n'){ total_len = i - SALT_L - 64 + 1; break;}
   }
-//generate integrity hash 
+//generate integrity hash
   sha256_init(&md);
   sha256_process(&md, db + SALT_L + 64, total_len);
   sha256_done(&md, integ_hash);
@@ -234,8 +234,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   unsigned int ename_l = 0;
   unsigned int uname_l = 0;
   unsigned int pwd_l = 0;
-  unsigned int cur = SALT_L + 32 + 32;
-  uint8_t current_part = 0;// 0 is entryname, 1 is username, 2 is password
+  unsigned int cur = SALT_L + 64;
   unsigned int start;
   unsigned int total_entries = 0;
   for(int i = SALT_L + 32 + 32; i < file_size - 16; ++i){
@@ -246,36 +245,40 @@ int load(node_t ** head, char * name, char * password, char * path){
 //start to first value
     start = cur;
 //get length of all entry parts
-    while(db[cur] != '\n'){
-      if(db[cur] == ' '){current_part = (current_part + 1) % 3; ++cur; continue;}
-      switch(current_part){
-        case 0: ++ename_l; break;
-        case 1: ++uname_l; break;
-        case 2: ++pwd_l; break;
-      }
+    while (db[cur] != ' ' && cur < file_size - 16){
+      ++ename_l;
+      ++cur;
+    }
     ++cur;
+    while (db[cur] != ' ' && cur < file_size - 16){
+      ++uname_l;
+      ++cur;
+    }
+    ++cur;
+    while (db[cur] != '\n' && cur < file_size - 16){
+      ++pwd_l;
+      ++cur;
     }
 //allocate space for those parts
     char * ename = calloc(1, sizeof(char) * (ename_l + 1));
     char * uname = calloc(1, sizeof(char) * (uname_l + 1));
-   char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
+    char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
 //save current then copy everything starting from start
-    int save = cur + 1;
-    cur = start;
+   int save = cur + 1;
+   cur = start;
 //Copy everything over
     for(int i = cur; i < cur + ename_l; ++i){
       ename[i - cur] = db[i];
     }
-    cur += ename_l;
-    cur += 1;
+    cur += ename_l + 1;
     for(int i = cur; i < cur + uname_l; ++i){
       uname[i - cur] = db[i];
     }
-    cur += uname_l;
-    cur += 1;
+    cur += uname_l + 1;
     for(int i = cur; i < cur + pwd_l; ++i){
       pwd[i - cur] = db[i];
     }
+//go to start of next entry data
     cur = save;
 //push new entry
     push(head, ename, uname, pwd, false);
@@ -289,7 +292,6 @@ int load(node_t ** head, char * name, char * password, char * path){
     ename_l = 0;
     uname_l = 0;
     pwd_l = 0;
-    current_part = 0;
   }
 
 
