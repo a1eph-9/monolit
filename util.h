@@ -328,12 +328,12 @@ int edit_entry(node_t * head, char * entry_name, char * option, char * new_value
   node_t * current = head;
   uint8_t chosen = 0;
   unsigned int new_value_l = strlen(new_value);
-  if(strncmp(option, "name", new_value_l) == 0){chosen = 1;}
-  else if(strncmp(option, "username", new_value_l) == 0){chosen = 2;}
-  else if(strncmp(option, "password", new_value_l) == 0){chosen = 3;}
+  if(strncmp(option, "name", 4) == 0){chosen = 1;}
+  else if(strncmp(option, "username", 8) == 0){chosen = 2;}
+  else if(strncmp(option, "password", 8) == 0){chosen = 3;}
   else{puts("Invalid option"); return 1;}
   while( current ){
-    if(strncmp(current->data.ename, entry_name, current->data.ename_l) == 0){
+    if(strcmp(current->data.ename, entry_name) == 0){
       switch(chosen){
 //edit entry name
       case 1:
@@ -448,7 +448,7 @@ int get_arg(char * str, char *** args){
 int print_spc(node_t * head, char * enm){
   node_t * current = head;
   while(current){
-    if(strncmp(current->data.ename, enm, current->data.ename_l) == 0){
+    if(strcmp(enm, current->data.ename) == 0){
       if(current->data.ename){
         printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
       }
