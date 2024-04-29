@@ -108,14 +108,10 @@ int load_settings(char * path, char * last_db){
   free(conf);
   if(settings != 0){
   if(settings % 2 != 1){ help_msg = false;}
-  settings = settings >> 1;
-  if(settings % 2 != 1){ spec = false;}
-  settings = settings >> 1;
-  if(settings % 2 != 1){ num = false;}
-  settings = settings >> 1;
-  if(settings % 2 != 1){ low = false;}
-  settings = settings >> 1;
-  if(settings % 2 != 1){ up = false;}
+  if((settings >> 1) % 2 != 1){ spec = false;}
+  if((settings >> 2) % 2 != 1){ num = false;}
+  if((settings >> 3) % 2 != 1){ low = false;}
+  if((settings >> 4) % 2 != 1){ up = false;}
   fclose(fp);
   return 0;
   }
@@ -178,6 +174,7 @@ char * pass_gen(int len){
   for(int i = 0; i < len; ++i){
     pass[i] = chars[randombytes_uniform(available)];
   }
+  free(chars);
   return pass;
 }
 

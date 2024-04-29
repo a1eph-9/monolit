@@ -102,13 +102,9 @@ int save(node_t * head, char * name, char * password, char * path){
   sodium_memzero(salt, SALT_L);
   sodium_memzero(hash, 32);
   sodium_memzero(key, 32);
-
-//possible that this first part has something to do with the load function
   if(salt_pass){
     sodium_memzero(salt_pass, pass_len + SALT_L);
-    //puts("1");
-    free(salt_pass);//error here when saving with keyfile
-    //puts("2");
+    free(salt_pass);  
   }
   if(db){
     sodium_memzero(db, total_len + SALT_L + 32);
@@ -118,7 +114,6 @@ int save(node_t * head, char * name, char * password, char * path){
     free(db_enc);//error here when saving normally
   }
   fclose(fp);
-
   return 0;
 }
 
@@ -159,8 +154,6 @@ int load(node_t ** head, char * name, char * password, char * path){
   char * db_enc = calloc(1, sizeof(char) * (file_size - 16)); //encrypted database
   fread(db_enc, 1, file_size - 16, fp);
   fclose(fp);
-
-
   //generate key
   sha256_init(&md);
   sha256_process(&md, password , pass_len);
@@ -198,6 +191,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     puts("Incorrect password");
     sodium_memzero(pwd_hash , 32);
     sodium_memzero(salt_pass, pass_len + SALT_L);
+    sodium_memzero(db , file_size - 16);
     free(salt_pass);
     free(db);
     free(db_enc);
@@ -221,7 +215,10 @@ int load(node_t ** head, char * name, char * password, char * path){
     if(ch != 'y' && ch != 'Y'){
       sodium_memzero(pwd_hash , 32);
       sodium_memzero(comp_integ_hash , 32);
+      sodium_memzero(integ_hash , 32);
+      sodium_memzero(comp_hash , 32);
       sodium_memzero(salt_pass, pass_len + SALT_L);
+      sodium_memzero(db, file_size - 16);
       free(salt_pass);
       free(db);
       free(db_enc);
