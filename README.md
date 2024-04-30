@@ -13,6 +13,7 @@ __Dependencies:__
 * gcc
 * libsodium
 * libtomcrypt
+
 __How to build:__
 ```
 git clone https://github.com/a1eph-9/monolit.git
