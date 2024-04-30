@@ -3,7 +3,7 @@
 Monolit is a simple, secure and useful commandline tool used for storing personal information. Useful for people who want a relatively lightweight and versatile password storage utility, with a integrated random password generator. It currently only has support for linux systems.
 
 ## Features
-* Make, edit and securely erase MLDB databases
+* Create, edit and securely erase MLDB databases
 * Customisable random password generation
 * Securely store personal information offline
 
@@ -11,6 +11,7 @@ Monolit is a simple, secure and useful commandline tool used for storing persona
 __Dependencies:__
 * make
 * gcc
+* shred
 * libsodium
 * libtomcrypt
 
