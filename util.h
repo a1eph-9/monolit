@@ -31,10 +31,10 @@ typedef struct entry{
   unsigned int ename_l;
   unsigned int uname_l;
   unsigned int pwd_l;
-}etr;
+}entry;
 
 typedef struct node_t{
-  etr data;
+  entry data;
   struct node_t * next;
 }node_t;
 

@@ -2,7 +2,7 @@
 
 
 int save(node_t * head, char * name, char * password, char * path){
-  if(!head){return 1;}
+  if(!head){puts("No entries loaded");return 1;}
   int pass_len = strlen(password);
   if(pass_len < 8){puts("A password length lower than 8 is not allowed"); return 1;}
   char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
@@ -12,7 +12,7 @@ int save(node_t * head, char * name, char * password, char * path){
   strncat(full_path, name, PATH_L - 1);
   strncat(full_path, ".mldb", PATH_L - 1);
   if(fexists(full_path) == 0){
-  printf("The file %s already exists, are you sure the password is correct [n/y]? ", name);
+  printf("The file %s already exists, are you sure the password is correct [y/n]? ", name);
   char ch = getchar();
   while(getchar() != '\n');
   if(ch != 'y' && ch != 'Y'){free(full_path);return 1;}
@@ -64,7 +64,12 @@ int save(node_t * head, char * name, char * password, char * path){
   sha256_done(&md, hash);
   db = calloc(sizeof(char) * (total_len + SALT_L + 64 + 1) ,1);
   enc_len = round_up(total_len + SALT_L + 64, 16);
-  db_enc = calloc(1, sizeof(char) * (enc_len) + 1);
+  db_enc = calloc(1, sizeof(char) * (enc_len));
+  if(db == NULL || db_enc == NULL){
+    free(salt_pass);
+    puts("Error allocating space, try again");
+    return 1;
+  }
   current = head;
   //move entry values to db
   while(current){
@@ -148,10 +153,17 @@ int load(node_t ** head, char * name, char * password, char * path){
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
   if(file_size % 16 != 0 || file_size <= 72){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
   char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
+  if(!salt_pass){fclose(fp);return 1;}
   rewind(fp);
   fread(iv, 1, 16, fp);
   char * db = calloc(1, sizeof(char) * (file_size - 16 + 1));//decrypted database
   char * db_enc = calloc(1, sizeof(char) * (file_size - 16)); //encrypted database
+  if(db == NULL || db_enc == NULL){
+    free(salt_pass);
+    fclose(fp);
+    puts("Error allocating space, try again");
+    return 1;
+  }
   fread(db_enc, 1, file_size - 16, fp);
   fclose(fp);
   //generate key
@@ -209,11 +221,12 @@ int load(node_t ** head, char * name, char * password, char * path){
 //compare integrity hashes from file and generated from file
   if(sodium_memcmp(integ_hash, comp_integ_hash, 32) != 0){
     puts("Database has been corrupted or tampered with");
-    printf("Would you still like to open it, this may cause a crash? [n/y]? ");
+    printf("Would you still like to open it?. This may cause a crash [y/n]? ");
     char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
       sodium_memzero(pwd_hash , 32);
+      sodium_memzero(salt_hash , 32);
       sodium_memzero(comp_integ_hash , 32);
       sodium_memzero(integ_hash , 32);
       sodium_memzero(comp_hash , 32);
@@ -260,7 +273,11 @@ int load(node_t ** head, char * name, char * password, char * path){
     char * ename = calloc(1, sizeof(char) * (ename_l + 1));
     char * uname = calloc(1, sizeof(char) * (uname_l + 1));
     char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
-//copy everything starting from start
+    if(ename == NULL || uname == NULL || pwd == NULL){
+      puts("Error allocating space, try again");
+      break;
+    }
+    //copy everything starting from start
    cur = start;
 //Copy everything over
     for(int i = cur; i < cur + ename_l; ++i){
