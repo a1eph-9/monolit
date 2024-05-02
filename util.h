@@ -163,6 +163,7 @@ char * pass_gen(int len){
     available += SPEC_L - 1;
   }
   char * chars = calloc(1, sizeof(char) * (available + 1));
+  if(!chars){return 0;}
   if(up){strncat(chars, UPPER, UPPER_L-1);}
   if(low){strncat(chars, LOWER, LOWER_L-1);}
   if(num){strncat(chars, NUM, NUM_L-1);}
@@ -171,6 +172,7 @@ char * pass_gen(int len){
     strncat(chars, SPEC, SPEC_L-1);
   }
   char * pass = calloc(1, sizeof(char) * (len + 1));
+  if(!pass){free(chars); return 0;}
   for(int i = 0; i < len; ++i){
     pass[i] = chars[randombytes_uniform(available)];
   }
@@ -269,7 +271,6 @@ int push(node_t ** head, char * enm, char * unm, char * pwd, bool v) {
   }
   else{return 1;}
   if(pwd_l < 8 && v == true){puts("A password length lower than 8 is not recommended");}
-//calloc is used here cus malloc was doing a wierd
   new_node->data.ename = calloc(1 , sizeof(char) * (ename_l + 1));  
   new_node->data.uname = calloc(1, sizeof(char) * (uname_l + 1));  
   new_node->data.pwd = calloc(1, sizeof(char) * (pwd_l + 1));

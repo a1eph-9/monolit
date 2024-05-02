@@ -158,7 +158,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   fread(iv, 1, 16, fp);
   char * db = calloc(1, sizeof(char) * (file_size - 16 + 1));//decrypted database
   char * db_enc = calloc(1, sizeof(char) * (file_size - 16)); //encrypted database
-  if(db == NULL || db_enc == NULL){
+  if(!db || !db_enc){
     free(salt_pass);
     fclose(fp);
     puts("Error allocating space, try again");
@@ -273,7 +273,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     char * ename = calloc(1, sizeof(char) * (ename_l + 1));
     char * uname = calloc(1, sizeof(char) * (uname_l + 1));
     char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
-    if(ename == NULL || uname == NULL || pwd == NULL){
+    if(!ename || !uname || !pwd){
       puts("Error allocating space, try again");
       break;
     }

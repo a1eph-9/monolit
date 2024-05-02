@@ -72,6 +72,7 @@ int main(int argc, char **argv){
 	  int pass_len = strtol(args[3], NULL, 10);
 	  if(pass_len > 0){
 	  char * pass = pass_gen(pass_len);
+          if(!pass){continue;}
           push(&head, args[1], args[2], pass, true);
 	  sodium_memzero(pass, pass_len);
 	  free(pass);
@@ -202,6 +203,7 @@ int main(int argc, char **argv){
 	  int rand_l = strtol(args[1], NULL, 10);
 	  if(rand_l > 0){
 	    char * rand = pass_gen(rand_l);
+            if(!rand){continue;}
 	    printf("Random password: %s\n", rand);
 	    sodium_memzero(rand, rand_l);
 	    free(rand);
