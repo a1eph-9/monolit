@@ -103,18 +103,17 @@ int load_settings(char * path, char * last_db){
   }
 //load settings
   if(i + 1 < len){
-  settings = conf[i + 1];
-  }
+    settings = conf[i + 1];
+    free(conf);
+    if(settings % 2 != 1){ help_msg = false;}
+    if((settings >> 1) % 2 != 1){ spec = false;}
+    if((settings >> 2) % 2 != 1){ num = false;}
+    if((settings >> 3) % 2 != 1){ low = false;}
+    if((settings >> 4) % 2 != 1){ up = false;}
+    fclose(fp);
+    return 0;
+}
   free(conf);
-  if(settings != 0){
-  if(settings % 2 != 1){ help_msg = false;}
-  if((settings >> 1) % 2 != 1){ spec = false;}
-  if((settings >> 2) % 2 != 1){ num = false;}
-  if((settings >> 3) % 2 != 1){ low = false;}
-  if((settings >> 4) % 2 != 1){ up = false;}
-  fclose(fp);
-  return 0;
-  }
   return 1;
 }
 
@@ -146,6 +145,31 @@ int save_settings(char * path, char * last_db){
   return 0;
 }
 
+int toggle( char * opt){
+  char set[] = "has been set to:";
+  if(strcmp(opt, "upper") == 0){
+    up = !up;
+    printf("Upper %s %s\n", set, up ? "true" : "false");
+  }  
+  else if(strcmp(opt, "lower") == 0){
+    low = !low;
+    printf("Lower %s %s\n", set, low ? "true" : "false");
+  }
+  else if(strcmp(opt, "number") == 0){
+    num = !num;
+    printf("Number %s %s\n", set, num ? "true" : "false");
+  }
+  else if(strcmp(opt, "special") == 0){
+    spec = !spec;
+    printf("Special %s %s\n ", opt, spec ? "true" : "false");
+  }
+  else{
+    printf("Invalid option: %s\n", opt);
+    return 1;
+  }
+  return 0;
+}
+
 
 int round_up(int len, int block_size){
   if(len % block_size == 0){return len;}
@@ -154,6 +178,10 @@ int round_up(int len, int block_size){
 
 
 char * pass_gen(int len){
+  if(!up && !low && !num && !spec){
+    puts("Must have at least one password generation option");
+    return 0;
+  }
   int available = 0;
   if(up){available += UPPER_L -1;}
   if(low){available += LOWER_L -1;}
@@ -205,6 +233,7 @@ int new_keyfile(char * name, char * len, char * path){
     fclose(fp);
     return 0;
   }
+  else if(fp){fclose(fp);}
   return 1;
 }
 

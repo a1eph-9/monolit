@@ -37,7 +37,7 @@ int main(int argc, char **argv){
   system("clear");
   load_settings(path, last_db);
   print_logo();
-  if(help_msg == true){puts("Use \"help\" to introduce yourself, to turn this message off do \"help off\"");}
+  if(help_msg == true){puts("Use \"help\" to introduce yourself, to turn this message off do \"help off\"\n");}
   while(1){
     printf(">> ");
     fgets( arg_input ,ARG_MAX-1 , stdin);
@@ -80,6 +80,13 @@ int main(int argc, char **argv){
 	  else{puts("Length can not be less than 1");}
 	}
 	else{wrong_arg(4, arg_count);}
+      }
+
+      else if(strcmp(args[0], "toggle" ) == 0 ){
+        if(arg_count == 2 ){
+          toggle(args[1]);
+	}
+	else{wrong_arg(2, arg_count);}
       }
 
       else if(strcmp(args[0], "remove" ) == 0 ){
