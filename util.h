@@ -319,7 +319,7 @@ int push(node_t ** head, char * enm, char * unm, char * pwd, bool v) {
 
 int print_list(node_t * head) {
 //prints all entry values
-  if(!head){return 1;}
+  if(!head){puts("No entries loaded") ;return 1;}
   node_t * current = head;
   while (current) {
     printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
@@ -583,6 +583,7 @@ int help(char * opt){
     puts("new_kf - create a new keyfile || 2 args");
     puts("save - save entries to file || 2 args");
     puts("load - load entries from file || 2 args");
+    puts("toggle - toggle password generation options || 1 arg");
     puts("load_last - load last used database || 1 arg");
     puts("save_kf - save entries to file using keyfile|| 3 args");
     puts("load_kf - load entries from file using keyfile || 3 args");
@@ -678,11 +679,16 @@ int help(char * opt){
      return 0;
   }  
    if(strcmp(opt, "shred") == 0){ 
-     puts("shred - securely delete a database");
+     puts("shred - securely delete a database, args:");
      puts("1: database name");
      return 0;
   }
 
+   if(strcmp(opt, "toggle") == 0){ 
+     puts("toggle - toggle password generation options, args:");
+     puts("1: Option name (can be: upper, lower, number or special)");
+     return 0;
+  }
    if(strcmp(opt, "off") == 0){
      help_msg = false;
      system("clear");

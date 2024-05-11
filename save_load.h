@@ -2,7 +2,7 @@
 
 
 int save(node_t * head, char * name, char * password, char * path){
-  if(!head){puts("No entries loaded");return 1;}
+  if(!head){puts("No entries loaded");return 0;}
   int pass_len = strlen(password);
   if(pass_len < 8){puts("A password length lower than 8 is not allowed"); return 1;}
   char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
@@ -54,10 +54,11 @@ int save(node_t * head, char * name, char * password, char * path){
   }
   fwrite(iv, 1, 16, fp);
 //add salt to password
-  strncpy(salt_pass, password, pass_len);
+  memcpy(salt_pass, password, pass_len);
   for(int i = pass_len; i < pass_len + SALT_L; ++i){
     salt_pass[i] = salt[i - pass_len];
   }
+
 //hash salted password
   sha256_init(&md);
   sha256_process(&md, salt_pass, pass_len + SALT_L);
@@ -66,8 +67,9 @@ int save(node_t * head, char * name, char * password, char * path){
   enc_len = round_up(total_len + SALT_L + 64, 16);
   db_enc = calloc(1, sizeof(char) * (enc_len));
   if(db == NULL || db_enc == NULL){
+    fclose(fp); 
     free(salt_pass);
-    puts("Error allocating space, try again");
+    puts("Error allocating space");
     return 1;
   }
   current = head;
@@ -151,7 +153,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   else{return 1;}
   unsigned int file_size = ftell(fp);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
-  if(file_size % 16 != 0 || file_size <= 72){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
+  if(file_size % 16 != 0 || file_size < 112){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
   char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
   if(!salt_pass){fclose(fp);return 1;}
   rewind(fp);
@@ -161,7 +163,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   if(!db || !db_enc){
     free(salt_pass);
     fclose(fp);
-    puts("Error allocating space, try again");
+    puts("Error allocating space");
     return 1;
   }
   fread(db_enc, 1, file_size - 16, fp);
@@ -184,7 +186,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   for(int i = SALT_L; i < 32 + SALT_L; ++i){
     comp_hash[i - SALT_L] = db[i];
   }
-  strncat(salt_pass, password, pass_len);
+  memcpy(salt_pass, password, pass_len);
   for(int i = pass_len; i < pass_len + SALT_L; ++i){
     salt_pass[i] = salt[i - pass_len];
   }
@@ -274,7 +276,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     char * uname = calloc(1, sizeof(char) * (uname_l + 1));
     char * pwd = calloc(1, sizeof(char) * (pwd_l + 1));
     if(!ename || !uname || !pwd){
-      puts("Error allocating space, try again");
+      puts("Error allocating space");
       break;
     }
     //copy everything starting from start
