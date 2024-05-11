@@ -39,7 +39,7 @@ typedef struct node_t{
 }node_t;
 
 void print_logo(){
-puts("   ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
+puts("\n   ███__  ███_   ██████_  ███_   ██_  ██████_  ██_      ██_ ████████_ ");
 puts("   ████| ████|  ██____██_ ████_  ██| ██____██| ██|      ██| |__██___| ");
 puts("   ██|████|██|  ██|   ██| ██|██_ ██| ██|   ██| ██|      ██|    ██| ");
 puts("   ██||██_|██|  ██|   ██| ██||██_██| ██|   ██| ██|      ██|    ██| ");
@@ -161,7 +161,7 @@ int toggle( char * opt){
   }
   else if(strcmp(opt, "special") == 0){
     spec = !spec;
-    printf("Special %s %s\n ", opt, spec ? "true" : "false");
+    printf("Special %s %s\n ", set, spec ? "true" : "false");
   }
   else{
     printf("Invalid option: %s\n", opt);
@@ -221,10 +221,11 @@ int new_keyfile(char * name, char * len, char * path){
     printf("The file %s already exists\n", name);
     return 1;
   }
+  char * key = pass_gen(key_len);
+  if(!key){free(full_path); return 1;}
   FILE * fp = fopen(full_path, "w");
   free(full_path);
-  char * key = pass_gen(key_len);
-  if(key && fp){
+  if(fp){
     fwrite("mlkf", 1, 4, fp);
     fwrite(key, 1, key_len, fp);
     sodium_memzero(key, key_len);
@@ -255,9 +256,9 @@ char * load_keyfile(char * name, char * path){
   fseek(fp, 0, SEEK_END);
   unsigned int kf_len = ftell(fp);
   rewind(fp);
-  if(kf_len <= 4){fclose(fp);return 0;}
+  if(kf_len <= 4){puts("Keyfile can not be shorter than 4 characters");fclose(fp);return 0;}
   fread(verif, 1, 4, fp);
-  if(strncmp(verif, "mlkf", 4) != 0){fclose(fp); return 0;}
+  if(strncmp(verif, "mlkf", 4) != 0){puts("Invalid keyfile");fclose(fp); return 0;}
   keyfile = calloc(1, sizeof(char) * (kf_len - 3));
   if(keyfile){
     fread(keyfile, 1, kf_len - 4, fp);
@@ -632,6 +633,12 @@ int help(char * opt){
     puts("3: password length");
     return 0;
   }
+   if(strcmp(opt, "r_pass") == 0){
+     puts("r_pass - generate a random password, args: ");
+     puts("1: password length");
+     return 0;
+   }
+
   if(strcmp(opt, "edit") == 0){ 
     puts("edit - edit a entry, args: ");
     puts("1: entry name");
