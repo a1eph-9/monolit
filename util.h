@@ -24,7 +24,7 @@ bool num = true;
 bool spec = true;
 bool help_msg = true;
 
-typedef struct entry{
+typedef struct{
   char * ename;
   char * uname;
   char * pwd;
