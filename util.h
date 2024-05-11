@@ -573,7 +573,7 @@ int help(char * opt){
   }
   if(strcmp(opt, "all") == 0){
     puts("exit - close the program || no args");
-    puts("clear - clear the screen || mo args");
+    puts("clear - clear the screen || no args");
     puts("show - show a specific entry || 1 arg");
     puts("show_all - show all entries || no args");
     puts("new - make a new entry || 3 args");
