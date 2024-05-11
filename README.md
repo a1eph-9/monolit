@@ -1,9 +1,9 @@
 # Monolit
 
-Monolit is a simple, secure and useful commandline tool used for storing personal information like usernames and passwords.  
-Useful for people who want a extremely lightweight and versatile info storage utility that can be used without a GUI.  
+Monolit is a simple, secure and useful commandline tool used for storing personal information like usernames and passwords.
+Useful for people who want a extremely lightweight and versatile info storage utility that can be used without a GUI.
 It uses fully encrypted databases that can be used from anywhere without fear of security risks.
-It currently only has support for linux systems.  
+It currently only has support for linux systems.
 
 ## Features
 * Create, edit and securely erase MLDB databases
