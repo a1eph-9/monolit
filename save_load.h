@@ -158,7 +158,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   else{return 1;}
   unsigned int file_size = ftell(fp) - strlen(VER);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
-  if((file_size) % 16 != 0 || file_size < 112){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
+  if(file_size % 16 != 0 || file_size < 112){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
   char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
   if(!salt_pass){fclose(fp);return 1;}
   rewind(fp);
