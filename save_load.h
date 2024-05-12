@@ -1,5 +1,5 @@
 #define SALT_L 16
-
+#define VER "monolit1.1"
 
 int save(node_t * head, char * name, char * password, char * path){
   if(!head){puts("No entries loaded");return 0;}
@@ -52,6 +52,7 @@ int save(node_t * head, char * name, char * password, char * path){
   for(int i = 0; i < 16; ++i){
     iv[i] = randombytes_uniform(256);
   }
+  fwrite(VER, 1, strlen(VER), fp);
   fwrite(iv, 1, 16, fp);
 //add salt to password
   memcpy(salt_pass, password, pass_len);
@@ -147,18 +148,32 @@ int load(node_t ** head, char * name, char * password, char * path){
   char integ_hash[32];//hash to check integrity of file
   char comp_integ_hash[32];//hash to check integrity of file
   char pwd_hash[32];//hash generated from password
+  char version[strlen(VER) + 1];
+  memset(version, '\0', strlen(VER) + 1);
   FILE * fp = fopen(full_path ,"r");
   free(full_path);
   if(fp){
     fseek(fp, 0, SEEK_END);
   }
   else{return 1;}
-  unsigned int file_size = ftell(fp);
+  unsigned int file_size = ftell(fp) - strlen(VER);
   if(file_size <= 0){puts("File can not be empty");fclose(fp);return 1;}
-  if(file_size % 16 != 0 || file_size < 112){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
+  if((file_size) % 16 != 0 || file_size < 112){puts("Database has been corrupted or tampered with");fclose(fp);return 1;}
   char * salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
   if(!salt_pass){fclose(fp);return 1;}
   rewind(fp);
+  fread(version, 1, strlen(VER), fp);
+  if(memcmp(version, VER, strlen(VER)) != 0){
+    puts("Incorrect database version");
+    printf("Would you still like to open it?. This may cause a crash [y/n]? ");
+    char ch = getchar();
+    while(getchar() != '\n');
+    if(ch != 'y' && ch != 'Y'){
+      free(salt_pass);
+      fclose(fp);
+      return 1;
+    }
+  }
   fread(iv, 1, 16, fp);
   char * db = calloc(1, sizeof(char) * (file_size - 16 + 1));//decrypted database
   char * db_enc = calloc(1, sizeof(char) * (file_size - 16)); //encrypted database
