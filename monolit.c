@@ -83,8 +83,8 @@ int main(int argc, char **argv){
       }
 
       else if(strcmp(args[0], "toggle" ) == 0 ){
-        if(arg_count == 2 ){
-          toggle(args[1]);
+        if(arg_count >= 2 ){
+	  for(int i = 1; i < arg_count; ++i){toggle(args[i]);}
 	}
 	else{wrong_arg(2, arg_count);}
       }

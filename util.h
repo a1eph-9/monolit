@@ -54,6 +54,7 @@ void wrong_arg(int ex, int go){
   }
   else{puts("Too many arguments");}
 }
+
 int fexists(char *name){
   FILE *fp = fopen(name,"r");
   if(fp){
@@ -147,10 +148,17 @@ int save_settings(char * path, char * last_db){
 
 int toggle( char * opt){
   char set[] = "has been set to:";
-  if(strcmp(opt, "upper") == 0){
+  if(strcmp(opt, "show") == 0){
+    printf("Upper: %s\n", up ? "true" : "false");
+    printf("Lower: %s\n", up ? "true" : "false");
+    printf("Number: %s\n", up ? "true" : "false");
+    printf("Special: %s\n\n", up ? "true" : "false");
+  }  
+  else if(strcmp(opt, "upper") == 0){
     up = !up;
     printf("Upper %s %s\n", set, up ? "true" : "false");
-  }  
+  }
+
   else if(strcmp(opt, "lower") == 0){
     low = !low;
     printf("Lower %s %s\n", set, low ? "true" : "false");
