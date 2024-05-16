@@ -150,9 +150,9 @@ int toggle( char * opt){
   char set[] = "has been set to:";
   if(strcmp(opt, "show") == 0){
     printf("Upper: %s\n", up ? "true" : "false");
-    printf("Lower: %s\n", up ? "true" : "false");
-    printf("Number: %s\n", up ? "true" : "false");
-    printf("Special: %s\n\n", up ? "true" : "false");
+    printf("Lower: %s\n", low ? "true" : "false");
+    printf("Number: %s\n", num ? "true" : "false");
+    printf("Special: %s\n\n", spec ? "true" : "false");
   }  
   else if(strcmp(opt, "upper") == 0){
     up = !up;
@@ -325,7 +325,6 @@ int push(node_t ** head, char * enm, char * unm, char * pwd, bool v) {
   return 1;
 }
 
-
 int print_list(node_t * head) {
 //prints all entry values
   if(!head){puts("No entries loaded") ;return 1;}
@@ -402,6 +401,10 @@ int edit_entry(node_t * head, char * entry_name, char * option, char * new_value
 int rem_spc(node_t ** head, char * entry_name){
 //search the list for an entry and then remove that entry
   if(*head == NULL){puts("No entries loaded");return 1;}
+  printf("Are you sure %s is the correct entry [n/y]? ", entry_name);
+  char ch = getchar();
+  while(getchar() != '\n');
+  if(ch != 'y' && ch != 'Y'){return 1;}
   node_t * current = *head;
   if(strcmp(current->data.ename, entry_name) == 0){
 //only for first member of list
@@ -701,7 +704,7 @@ int help(char * opt){
 
    if(strcmp(opt, "toggle") == 0){ 
      puts("toggle - toggle password generation options, args:");
-     puts("1: Option name (can be: upper, lower, number or special)");
+     puts("1: Option name (can be: upper, lower, number, special. Use show to show current settings)");
      return 0;
   }
    if(strcmp(opt, "off") == 0){
@@ -715,5 +718,11 @@ int help(char * opt){
   return 1;
 }
 
-
-
+//           /\
+//          /@$\
+//          \$@/
+//          _\/_
+//          \##/
+//           ||
+//           ||           
+//and he saw that it was good
