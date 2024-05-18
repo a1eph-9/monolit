@@ -718,11 +718,13 @@ int help(char * opt){
   return 1;
 }
 
-//           /\
-//          /@$\
-//          \$@/
-//          _\/_
-//          \##/
-//           ||
-//           ||           
-//and he saw that it was good
+/*
+           /\
+          /@$\
+          \$@/
+          _\/_
+          \##/
+           ||
+           ||           
+and he saw that it was good
+*/

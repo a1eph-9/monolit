@@ -1,5 +1,5 @@
 #define SALT_L 16
-#define VER "monolit1.1"
+#define VER "monolit1.2"
 
 int save(node_t * head, char * name, char * password, char * path){
   if(!head){puts("No entries loaded");return 0;}
@@ -77,9 +77,9 @@ int save(node_t * head, char * name, char * password, char * path){
   //move entry values to db
   while(current){
     strncat(db + 64 + SALT_L, current->data.ename, total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, " ", total_len + SALT_L + 64);
+    strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
     strncat(db + 64 + SALT_L, current->data.uname, total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, " ", total_len + SALT_L + 64);
+    strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
     strncat(db + 64 + SALT_L, current->data.pwd, total_len + SALT_L + 64);
     strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
     current = current->next;
@@ -115,7 +115,7 @@ int save(node_t * head, char * name, char * password, char * path){
     free(salt_pass);  
   }
   if(db){
-    sodium_memzero(db, total_len + SALT_L + 32);
+    sodium_memzero(db, total_len + SALT_L + 64);
     free(db);
   }
   if(db_enc){
@@ -240,7 +240,7 @@ int load(node_t ** head, char * name, char * password, char * path){
 //compare integrity hashes from file and generated from file
   if(sodium_memcmp(integ_hash, comp_integ_hash, 32) != 0){
     puts("Database has been corrupted or tampered with");
-    printf("Would you still like to open it?. This may cause a crash [y/n]? ");
+    printf("Would you still like to open it?. This may cause unexpected behaviour [y/n]? ");
     char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
@@ -270,16 +270,17 @@ int load(node_t ** head, char * name, char * password, char * path){
     if(db[i] == '\n'){++total_entries;}
   }
   if(total_entries == 0){return 1;}
+  total_entries = total_entries / 3;
   for(int i = 0; i < total_entries; ++i){
 //start to first value
     start = cur;
 //get length of all entry parts
-    while (db[cur] != ' ' && cur < file_size - 16){
+    while (db[cur] != '\n' && cur < file_size - 16){
       ++ename_l;
       ++cur;
     }
     ++cur;
-    while (db[cur] != ' ' && cur < file_size - 16){
+    while (db[cur] != '\n' && cur < file_size - 16){
       ++uname_l;
       ++cur;
     }
