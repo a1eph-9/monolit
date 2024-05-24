@@ -1,5 +1,5 @@
 #define SALT_L 16
-#define VER "monolit1.2"
+#define VER "monolit1.3"
 
 int save(node_t * head, char * name, char * password, char * path){
   if(!head){puts("No entries loaded");return 0;}
@@ -7,18 +7,28 @@ int save(node_t * head, char * name, char * password, char * path){
   if(pass_len < 8){puts("A password length lower than 8 is not allowed"); return 1;}
   char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;}
-  strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/", PATH_L - 1);
-  strncat(full_path, name, PATH_L - 1);
-  strncat(full_path, ".mldb", PATH_L - 1);
+  bool is_path = false;
+  for(int i = 0; i < strlen(path); ++i){
+    if(name[i] == '/'){is_path = true; break;}
+  }
+  if(is_path == false){
+    strncat(full_path, path, PATH_L - 1);
+    strncat(full_path, "/", PATH_L - 1);
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mldb", PATH_L - 1);
+  }
+  else{
+    strncpy(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mldb", PATH_L - 1);
+  }
   if(fexists(full_path) == 0){
-  printf("The file %s already exists, are you sure the password is correct [y/n]? ", name);
+  printf("The file %s already exists,are you sure the password is correct [y/n]? ", name);
   char ch = getchar();
   while(getchar() != '\n');
   if(ch != 'y' && ch != 'Y'){free(full_path);return 1;}
   }
   hash_state md;
-  char iv[16];//init vec for enc
+  char iv[16];//init vector for enc
   char salt[SALT_L];
   char hash[32];//hash of salted password
   char integ_hash[32];//hash of salted password
@@ -30,7 +40,7 @@ int save(node_t * head, char * name, char * password, char * path){
   unsigned int enc_len = 0;//length of encrypted text
   FILE * fp = fopen(full_path, "w");
   free(full_path);
-  if(!fp){free(salt_pass); return 1;}
+  if(!fp){puts("Could not open file");free(salt_pass); return 1;}
   node_t * current = head;
   unsigned int total_len = 0;
   sha256_init(&md);//generate key
@@ -131,10 +141,21 @@ int save(node_t * head, char * name, char * password, char * path){
 int load(node_t ** head, char * name, char * password, char * path){
   char * full_path = calloc(1, sizeof(char) * PATH_L);
   if(!full_path){return 1;}
-  strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/", PATH_L - 1);
-  strncat(full_path, name, PATH_L - 1);
-  strncat(full_path, ".mldb", PATH_L - 1);
+
+  bool is_path = false;
+  for(int i = 0; i < strlen(path); ++i){
+    if(name[i] == '/'){is_path = true; break;}
+  }
+  if(is_path == false){
+    strncat(full_path, path, PATH_L - 1);
+    strncat(full_path, "/", PATH_L - 1);
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mldb", PATH_L - 1);
+  }
+  else{
+    strncpy(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mldb", PATH_L - 1);
+  }
   if(fexists(full_path) != 0){
     puts("File not found");
     return 1;

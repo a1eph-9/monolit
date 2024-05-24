@@ -125,6 +125,14 @@ int main(int argc, char **argv){
 	else{wrong_arg(2, arg_count);}
     }
 
+    else if(strcmp(args[0], "save_last" ) == 0 ){
+        if(arg_count == 2){
+	  save(head, last_db , args[1], path);
+	}
+	else{wrong_arg(2, arg_count);}
+    }
+
+
     else if(strcmp(args[0], "load" ) == 0 ){
         if(arg_count == 3){
 	  if(load(&head, args[1] , args[2], path) == 0){
