@@ -1,5 +1,5 @@
 #define SALT_L 16
-#define VER "monolit1.3"
+#define VER "monolit1.3" //the first 7 letters of this should not be changed
 
 int save(node_t * head, char * name, char * password, char * path){
   if(!head){puts("No entries loaded");return 0;}
@@ -19,7 +19,6 @@ int save(node_t * head, char * name, char * password, char * path){
   }
   else{
     strncpy(full_path, name, PATH_L - 1);
-    strncat(full_path, ".mldb", PATH_L - 1);
   }
   if(fexists(full_path) == 0){
   printf("The file %s already exists,are you sure the password is correct [y/n]? ", name);
@@ -154,7 +153,6 @@ int load(node_t ** head, char * name, char * password, char * path){
   }
   else{
     strncpy(full_path, name, PATH_L - 1);
-    strncat(full_path, ".mldb", PATH_L - 1);
   }
   if(fexists(full_path) != 0){
     puts("File not found");
@@ -183,9 +181,15 @@ int load(node_t ** head, char * name, char * password, char * path){
   if(!salt_pass){fclose(fp);return 1;}
   rewind(fp);
   fread(version, 1, strlen(VER), fp);
+  if(memcmp(version, "monolit", 7) != 0){
+    puts("File is not a monolit database");
+    free(salt_pass);
+    fclose(fp);
+    return 1;
+  }
   if(memcmp(version, VER, strlen(VER)) != 0){
     puts("Incorrect database version");
-    printf("Would you still like to open it?. This may cause a crash [y/n]? ");
+    printf("Would you still like to open it?. iThis may cause a crash [y/n]? ");
     char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){

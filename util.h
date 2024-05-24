@@ -597,6 +597,7 @@ int help(char * opt){
     puts("load - load entries from file || 2 args");
     puts("toggle - toggle password generation options || 1 arg");
     puts("load_last - load last used database || 1 arg");
+    puts("save_last - load last used database || 1 arg");
     puts("save_kf - save entries to file using keyfile|| 3 args");
     puts("load_kf - load entries from file using keyfile || 3 args");
     puts("shred - securely delete a database || 1 arg");
@@ -689,7 +690,11 @@ int help(char * opt){
      puts("1: password");
      return 0;
   }
-
+   if(strcmp(opt, "save_last") == 0){ 
+    puts("save_last - save to last used database, args:");
+     puts("1: password");
+     return 0;
+  }
    if(strcmp(opt, "new_kf") == 0){ 
      puts("new_kf - create a new keyfile, args: ");
      puts("1: keyfile name");
