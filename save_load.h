@@ -109,6 +109,7 @@ int save(node_t * head, char * name, char * password, char * path){
   for(int i = SALT_L + 32; i < SALT_L + 64; ++i){
     db[i] = integ_hash[i - SALT_L - 32];
   }
+
 //encrypt and write to file
   if( encrypt(db, db_enc, key, iv, enc_len) == 0){
     fwrite(db_enc, 1, enc_len, fp);
@@ -337,7 +338,7 @@ int load(node_t ** head, char * name, char * password, char * path){
     for(int i = cur; i < cur + pwd_l; ++i){
       pwd[i - cur] = db[i];
     }
-    cur += uname_l + 1;
+    cur += pwd_l + 1;
 //push new entry
     push(head, ename, uname, pwd, false);
 //memzero and free everything
