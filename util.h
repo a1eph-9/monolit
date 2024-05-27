@@ -484,9 +484,8 @@ int print_spc(node_t * head, char * enm){
   node_t * current = head;
   while(current){
     if(strcmp(enm, current->data.ename) == 0){
-      printf("Entryname:   %s  %d\n", current->data.ename, current->data.ename_l);
       printf("Username:    %s  %d\n", current->data.uname, current->data.uname_l);
-      printf("Password:    %s  %d\n", current->data.pwd, current->data.pwd_l);
+      printf("Password:    %s  %d\n\n", current->data.pwd, current->data.pwd_l);
       return 0;
     }
     current = current->next;
