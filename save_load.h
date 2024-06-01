@@ -99,7 +99,6 @@ int save(node_t * head, char * name, char * password, char * path){
 
     current = current->next;
   }
-  printf("%s", db + 64 + SALT_L);
 //write salt
   memcpy(db, salt, SALT_L);
 //write hash of password
