@@ -11,7 +11,7 @@ int save(node_t * head, char * name, char * password, char * path){
   for(int i = 0; i < strlen(path); ++i){
     if(name[i] == '/'){is_path = true; break;}
   }
-  if(is_path == false){
+  if(!is_path){
     strncat(full_path, path, PATH_L - 1);
     strncat(full_path, "/", PATH_L - 1);
     strncat(full_path, name, PATH_L - 1);
@@ -85,16 +85,21 @@ int save(node_t * head, char * name, char * password, char * path){
   }
   current = head;
   //move entry values to db
+  unsigned int pos = 64 + SALT_L;
   while(current){
-    strncat(db + 64 + SALT_L, current->data.ename, total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, current->data.uname, total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, current->data.pwd, total_len + SALT_L + 64);
-    strncat(db + 64 + SALT_L, "\n", total_len + SALT_L + 64);
+    strncat(db + pos, current->data.ename, current->data.ename_l);
+    pos += current->data.ename_l;
+    db[pos] = '\n'; ++pos;
+    strncat(db + pos, current->data.uname, current->data.uname_l);
+    pos += current->data.uname_l;
+    db[pos] = '\n'; ++pos;
+   strncat(db + pos, current->data.pwd, current->data.pwd_l);
+    pos += current->data.pwd_l;
+    db[pos] = '\n'; ++pos;
+
     current = current->next;
   }
-
+  printf("%s", db + 64 + SALT_L);
 //write salt
   memcpy(db, salt, SALT_L);
 //write hash of password

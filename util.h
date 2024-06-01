@@ -219,10 +219,20 @@ char * pass_gen(int len){
 int new_keyfile(char * name, char * len, char * path){
   char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 1;}
-  strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/", PATH_L - 1);
-  strncat(full_path, name, PATH_L - 1);
-  strncat(full_path, ".mlkf", PATH_L - 1);
+  bool is_path = false;
+  for(int i = 0; i < strlen(name); ++i){
+    if(name[i] == '/'){is_path = true; break;}
+  }
+  if(!is_path){
+    strncat(full_path, path, PATH_L - 1);
+    strncat(full_path, "/", PATH_L - 1);
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mlkf", PATH_L - 1);
+  }
+  else{
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mlkf", PATH_L - 1);
+  }
   int key_len = strtol(len, NULL, 10);
   if(key_len <= 0){puts("Lenght can not be less than 1"); return 1;}
   if(fexists(full_path) == 0){
@@ -249,12 +259,22 @@ int new_keyfile(char * name, char * len, char * path){
 char * load_keyfile(char * name, char * path){
   char * full_path = calloc(1, sizeof(char) * (PATH_L + 1));
   if(!full_path){return 0;}
+  bool is_path = false;
+  for(int i = 0; i < strlen(name); ++i){
+    if(name[i] == '/'){is_path = true; break;}
+  }
   char verif[4];
   char * keyfile;
-  strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/", PATH_L - 1);
-  strncat(full_path, name, PATH_L - 1);
-  strncat(full_path, ".mlkf", PATH_L - 1);
+  if(!is_path){
+    strncat(full_path, path, PATH_L - 1);
+    strncat(full_path, "/", PATH_L - 1);
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mlkf", PATH_L - 1);
+  }
+  else{
+    strncat(full_path, name, PATH_L - 1);
+    strncat(full_path, ".mlkf", PATH_L - 1);
+  }
   if(fexists(full_path) != 0){
     puts("Keyfile was not found");
     return 0;
