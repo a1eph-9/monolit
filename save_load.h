@@ -87,13 +87,13 @@ int save(node_t * head, char * name, char * password, char * path){
   //move entry values to db
   unsigned int pos = 64 + SALT_L;
   while(current){
-    strncat(db + pos, current->data.ename, current->data.ename_l);
+    memcpy(db + pos, current->data.ename, current->data.ename_l);
     pos += current->data.ename_l;
     db[pos] = '\n'; ++pos;
-    strncat(db + pos, current->data.uname, current->data.uname_l);
+    memcpy(db + pos, current->data.uname, current->data.uname_l);
     pos += current->data.uname_l;
     db[pos] = '\n'; ++pos;
-   strncat(db + pos, current->data.pwd, current->data.pwd_l);
+    memcpy(db + pos, current->data.pwd, current->data.pwd_l);
     pos += current->data.pwd_l;
     db[pos] = '\n'; ++pos;
 
