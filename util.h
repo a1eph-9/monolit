@@ -106,11 +106,11 @@ int load_settings(char * path, char * last_db){
   if(i + 1 < len){
     settings = conf[i + 1];
     free(conf);
-    if(settings % 2 != 1){ help_msg = false;}
-    if((settings >> 1) % 2 != 1){ spec = false;}
-    if((settings >> 2) % 2 != 1){ num = false;}
-    if((settings >> 3) % 2 != 1){ low = false;}
-    if((settings >> 4) % 2 != 1){ up = false;}
+    if((settings & 0x01) != 1){ help_msg = false;}
+    if(((settings >> 1) & 0x01) != 1){ spec = false;}
+    if(((settings >> 2) & 0x01) != 1){ num = false;}
+    if(((settings >> 3) & 0x01) != 1){ low = false;}
+    if(((settings >> 4) & 0x01) != 1){ up = false;}
     fclose(fp);
     return 0;
 }
@@ -741,14 +741,3 @@ int help(char * opt){
 
   return 1;
 }
-
-/*
-           /\
-          /@$\
-          \$@/
-          _\/_
-          \##/
-           ||
-           ||           
-and he saw that it was good
-*/
