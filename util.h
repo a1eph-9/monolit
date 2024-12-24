@@ -83,7 +83,7 @@ int load_settings(char * path, char * last_db){
   FILE * fp;
   uint8_t settings = 0;
   strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/config", PATH_L - 1);
+  strncat(full_path, "config", PATH_L - 1);
   if(fexists(full_path) != 0){
    return 1; 
   }
@@ -124,7 +124,7 @@ int save_settings(char * path, char * last_db){
   FILE * fp;
   uint8_t settings = 0;
   strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/config", PATH_L - 1);
+  strncat(full_path, "config", PATH_L - 1);
   fp = fopen(full_path ,"w");
   free(full_path);
   if(!fp){return 1;}
@@ -225,7 +225,6 @@ int new_keyfile(char * name, char * len, char * path){
   }
   if(!is_path){
     strncat(full_path, path, PATH_L - 1);
-    strncat(full_path, "/", PATH_L - 1);
     strncat(full_path, name, PATH_L - 1);
     strncat(full_path, ".mlkf", PATH_L - 1);
   }
@@ -267,7 +266,6 @@ char * load_keyfile(char * name, char * path){
   char * keyfile;
   if(!is_path){
     strncat(full_path, path, PATH_L - 1);
-    strncat(full_path, "/", PATH_L - 1);
     strncat(full_path, name, PATH_L - 1);
     strncat(full_path, ".mlkf", PATH_L - 1);
   }
@@ -293,26 +291,6 @@ char * load_keyfile(char * name, char * path){
   }
   fclose(fp);
   return keyfile;
-}
-
-int shred(char * name, char * path){
-  char full_path[PATH_L];
-  char command[] = {"shred -n 16 -z -u "};
-  memset(full_path, '\0', PATH_L);
-  strncat(full_path, path, PATH_L - 1);
-  strncat(full_path, "/", PATH_L - 1);
-  strncat(full_path, name, PATH_L - 1);
-  strncat(full_path, ".mldb", PATH_L - 1);
-  if(fexists(full_path) != 0){
-    puts("File was not found");
-    return 0;
-  }
-  printf("Are you sure %s is the correct database [n/y]? ", name);
-  char ch = getchar();
-  while(getchar() != '\n');
-  if(ch != 'y' && ch != 'Y'){return 1;}
-  system(strcat(command, full_path));
-  return 0;
 }
 
 int push(node_t ** head, char * enm, char * unm, char * pwd, bool v) {
@@ -619,7 +597,6 @@ int help(char * opt){
     puts("save_last - load last used database || 1 arg");
     puts("save_kf - save entries to file using keyfile|| 3 args");
     puts("load_kf - load entries from file using keyfile || 3 args");
-    puts("shred - securely delete a database || 1 arg");
     return 0;
   }
   if(strcmp(opt, "show") == 0){ 
@@ -720,11 +697,6 @@ int help(char * opt){
      puts("2: keyfile length");
      return 0;
   }  
-   if(strcmp(opt, "shred") == 0){ 
-     puts("shred - securely delete a database, args:");
-     puts("1: database name");
-     return 0;
-  }
 
    if(strcmp(opt, "toggle") == 0){ 
      puts("toggle - toggle password generation options, args:");

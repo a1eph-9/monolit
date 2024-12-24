@@ -30,7 +30,7 @@ int main(int argc, char **argv){
   getlogin_r(name, 64);
   strncat(path, "/home/", PATH_L - 1);
   strncat(path, name, PATH_L - 1);
-  strncat(path, "/.monolit", PATH_L - 1);
+  strncat(path, "/.monolit/", PATH_L - 1);
   if (stat(path, &st) == -1) {
     mkdir(path, 0700);
   }
@@ -225,13 +225,6 @@ int main(int argc, char **argv){
 	  }
 	  else{puts("Length can not be less than 1");}
 
-	}
-	else{wrong_arg(2, arg_count);}
-    }
-
-    else if(strcmp(args[0], "shred" ) == 0 ){
-        if(arg_count == 2){
-	    shred(args[1], path);
 	}
 	else{wrong_arg(2, arg_count);}
     }
