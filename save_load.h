@@ -299,8 +299,8 @@ int save(node_t * head, char * name, char * password, char * path){
       puts("Incorrect password");
       printf("Would you like to save with the password \"%s\"? [n/y] ", password);
       char ch = getchar();
+      while(getchar() != '\n');
       if(ch != 'y' && ch != 'Y'){return 1;}
-      while(getchar != '\n')
     }
   }
   hash_state md;
