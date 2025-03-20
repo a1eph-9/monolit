@@ -2,44 +2,6 @@
 #define VER "monolit1.4" //the first 7 letters of this should not be changed
 
 
-int verif_pass(char * pass, char * full_path){
-  char iv[16];
-  char * salt_pass;
-  char db_enc[SALT_L + 64];
-  char salt[SALT_L];
-  char db[SALT_L + 64];
-  char pwd_hash[32];
-  char comp_hash[32];
-  int pass_len = strlen(pass);
-  FILE * fp = fopen(full_path ,"r");
-  hash_state md;
-  if(!fp){return 1;}
-  fseek(fp, strlen(VER), SEEK_SET);
-  fread(iv, 1, 16, fp);
-  fread(db_enc, 1, SALT_L + 32, fp); 
-  fclose(fp);
-  sha256_init(&md);//generate key
-  sha256_process(&md, pass , pass_len);
-  sha256_done(&md, pwd_hash);
-  if(decrypt(db_enc, db, pwd_hash, iv, SALT_L + 32) != 0){
-    return 1;
-  }
-  memcpy(salt, db, SALT_L);
-  memcpy(comp_hash, &(db[SALT_L]), 32);
-  
-  salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
-  memcpy(salt_pass, pass, pass_len);
-  for(int i = pass_len; i < pass_len + SALT_L; ++i){
-    salt_pass[i] = salt[i - pass_len];
-  }
-  sha256_init(&md);//generate comp hash
-  sha256_process(&md, salt_pass , pass_len + SALT_L);
-  sha256_done(&md, pwd_hash);
-  //memcmp doesnt work
-  if(memcmp(pwd_hash, comp_hash, 32) != 0){return 1;}
-  return 0;
-}
-
 
 int load(node_t ** head, char * name, char * password, char * path){
   char * full_path = calloc(1, sizeof(char) * PATH_L);
@@ -93,7 +55,7 @@ int load(node_t ** head, char * name, char * password, char * path){
   }
   if(memcmp(version, VER, strlen(VER)) != 0){
     puts("Incorrect database version");
-    printf("Would you still like to open it?. iThis may cause a crash [y/n]? ");
+    printf("Would you still like to open it?. This may cause a crash [y/n]? ");
     char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
@@ -168,7 +130,7 @@ int load(node_t ** head, char * name, char * password, char * path){
 //compare integrity hashes from file and generated from file
   if(sodium_memcmp(integ_hash, comp_integ_hash, 32) != 0){
     puts("Database has been corrupted or tampered with");
-    printf("Would you still like to open it?. This may cause unexpected behaviour [y/n]? ");
+    printf("Would you still like to open it?. This may cause unexpected behaviour. [n/y] ");
     char ch = getchar();
     while(getchar() != '\n');
     if(ch != 'y' && ch != 'Y'){
@@ -253,8 +215,6 @@ int load(node_t ** head, char * name, char * password, char * path){
     uname_l = 0;
     pwd_l = 0;
   }
-
-
   sodium_memzero(pwd_hash , 32);
   sodium_memzero(salt_pass, pass_len + SALT_L);
   free(salt_pass);
@@ -270,6 +230,48 @@ int load(node_t ** head, char * name, char * password, char * path){
   return 0;
 }
 
+
+
+int verif_pass(char * pass, char * full_path){
+  char iv[16];
+  char * salt_pass;
+  char db_enc[SALT_L + 64];
+  char salt[SALT_L];
+  char db[SALT_L + 64];
+  char pwd_hash[32];
+  char comp_hash[32];
+  int pass_len = strlen(pass);
+  FILE * fp = fopen(full_path ,"r");
+  hash_state md;
+  if(!fp){return 1;}
+  fseek(fp, strlen(VER), SEEK_SET);
+  fread(iv, 1, 16, fp);
+  fread(db_enc, 1, SALT_L + 32, fp); 
+  fclose(fp);
+  sha256_init(&md);//generate key
+  sha256_process(&md, pass , pass_len);
+  sha256_done(&md, pwd_hash);
+  if(decrypt(db_enc, db, pwd_hash, iv, SALT_L + 32) != 0){
+    return 1;
+  }
+  memcpy(salt, db, SALT_L);
+  memcpy(comp_hash, &(db[SALT_L]), 32);
+  
+  salt_pass = calloc(1, sizeof(char) * (pass_len + SALT_L + 1));
+  memcpy(salt_pass, pass, pass_len);
+  for(int i = pass_len; i < pass_len + SALT_L; ++i){
+    salt_pass[i] = salt[i - pass_len];
+  }
+  sha256_init(&md);//generate comp hash
+  sha256_process(&md, salt_pass , pass_len + SALT_L);
+  sha256_done(&md, pwd_hash);
+  free(salt_pass);
+  if(memcmp(pwd_hash, comp_hash, 32) != 0){return 1;}
+  sodium_memzero(pwd_hash, 32);
+  sodium_memzero(comp_hash, 32);
+  sodium_memzero(db, SALT_L + 64);
+  return 0;
+}
 
 
 
@@ -293,7 +295,13 @@ int save(node_t * head, char * name, char * password, char * path){
     strncat(full_path, ".mldb", PATH_L - 1);
   }
   if(fexists(full_path) == 0){
-    if(verif_pass(password, full_path) != 0){puts("Incorrect password"); return 1;}
+    if(verif_pass(password, full_path) != 0){
+      puts("Incorrect password");
+      printf("Would you like to save with the password \"%s\"? [n/y] ", password);
+      char ch = getchar();
+      if(ch != 'y' && ch != 'Y'){return 1;}
+      while(getchar != '\n')
+    }
   }
   hash_state md;
   char iv[16];//init vector for enc
@@ -307,7 +315,7 @@ int save(node_t * head, char * name, char * password, char * path){
   char * db_enc = NULL;//encrypted database
   unsigned int enc_len = 0;//length of encrypted text
   FILE * fp = fopen(full_path, "w");
-  free(full_path);
+  free(full_path);	
   if(!fp){puts("Could not open file");free(salt_pass); return 1;}
   node_t * current = head;
   unsigned int total_len = 0;
@@ -355,13 +363,13 @@ int save(node_t * head, char * name, char * password, char * path){
   //move entry values to db
   unsigned int pos = 64 + SALT_L;
   while(current){
-    memcpy(db + pos, current->data.ename, current->data.ename_l);
+    memcpy(&(db[pos]), current->data.ename, current->data.ename_l);
     pos += current->data.ename_l;
     db[pos] = '\n'; ++pos;
-    memcpy(db + pos, current->data.uname, current->data.uname_l);
+    memcpy(&(db[pos]), current->data.uname, current->data.uname_l);
     pos += current->data.uname_l;
     db[pos] = '\n'; ++pos;
-    memcpy(db + pos, current->data.pwd, current->data.pwd_l);
+    memcpy(&(db[pos]), current->data.pwd, current->data.pwd_l);
     pos += current->data.pwd_l;
     db[pos] = '\n'; ++pos;
 

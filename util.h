@@ -399,7 +399,7 @@ int edit_entry(node_t * head, char * entry_name, char * option, char * new_value
 int rem_spc(node_t ** head, char * entry_name){
 //search the list for an entry and then remove that entry
   if(*head == NULL){puts("No entries loaded");return 1;}
-  printf("Are you sure %s is the correct entry [n/y]? ", entry_name);
+  printf("Are you sure \"%s\" is the correct entry? [n/y] ", entry_name);
   char ch = getchar();
   while(getchar() != '\n');
   if(ch != 'y' && ch != 'Y'){return 1;}
